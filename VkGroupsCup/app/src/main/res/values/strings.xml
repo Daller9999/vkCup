@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">VkGroupsCup</string>
+    <integer name="com_vk_sdk_AppId">7321146</integer>
+    <string name="main_text">Отписаться от сообществ</string>
+    <string name="second_text">Коснитесь и удерживайте,\n чтобы увидеть информацию\n о сообществе</string>
+
+    <string name="open_group_text">Открыть</string>
+    <string name="leave_group">Отписаться</string>
+</resources>
