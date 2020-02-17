@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
+import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -31,6 +32,7 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
     private TextView textViewLastPost;
 
     private volatile boolean isOpen = true;
+    private volatile boolean isSelect = false;
 
     public void setOnRecyclerClick(OnRecyclerClick onRecyclerClick) {
         this.onRecyclerClick = onRecyclerClick;
@@ -104,29 +106,28 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
     }
 
     @Override public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        GroupInfo[] groupInfo = list.get(position);
-        if (groupInfo[0] != null) {
-            if (groupInfo[0].getName() != null)
-                holder.textView1.setText(groupInfo[0].getName());
-            if (groupInfo[0].getBitmap() != null)
-                holder.imageView1.setImageBitmap(groupInfo[0].getBitmap());
-            holder.view1.setVisibility(groupInfo[0].isSelected() ? View.VISIBLE : View.GONE);
-        }
+        GroupInfo[] groupInfos = list.get(position);
+        int visibility;
+        boolean enable;
 
-        if (groupInfo[1] != null) {
-            if (groupInfo[1].getName() != null)
-                holder.textView2.setText(groupInfo[1].getName());
-            if (groupInfo[1].getBitmap() != null)
-                holder.imageView2.setImageBitmap(groupInfo[1].getBitmap());
-            holder.view2.setVisibility(groupInfo[1].isSelected() ? View.VISIBLE : View.GONE);
-        }
-
-        if (groupInfo[2] != null) {
-            if (groupInfo[2].getName() != null)
-                holder.textView3.setText(groupInfo[2].getName());
-            if (groupInfo[2].getBitmap() != null)
-                holder.imageView3.setImageBitmap(groupInfo[2].getBitmap());
-            holder.view3.setVisibility(groupInfo[2].isSelected() ? View.VISIBLE : View.GONE);
+        for (int i = 0; i < groupInfos.length; i++) {
+            if (groupInfos[i] != null) {
+                if (groupInfos[i].getName() != null)
+                    holder.textViews[i].setText(groupInfos[i].getName());
+                if (groupInfos[i].getBitmap() != null)
+                    holder.imageViews[i].setImageBitmap(groupInfos[i].getBitmap());
+                visibility = groupInfos[i].isSelected() ? View.VISIBLE : View.GONE;
+                holder.views[i].setVisibility(visibility);
+                holder.checks[i].setVisibility(visibility);
+            } else {
+                holder.views[i].setVisibility(View.GONE);
+                holder.checks[i].setVisibility(View.GONE);
+            }
+            visibility = groupInfos[i] == null ? View.INVISIBLE : View.VISIBLE;
+            enable = groupInfos[i] != null;
+            holder.textViews[i].setVisibility(visibility);
+            holder.imageViews[i].setEnabled(enable);
+            holder.cardViews[i].setVisibility(visibility);
         }
     }
 
@@ -139,14 +140,23 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
         private TextView textView1;
         private TextView textView2;
         private TextView textView3;
+        private TextView[] textViews;
+        private CardView[] cardViews;
 
         private ImageView imageView1;
         private ImageView imageView2;
         private ImageView imageView3;
+        private ImageView[] imageViews;
 
         private View view1;
         private View view2;
         private View view3;
+        private View[] views;
+
+        private View check1;
+        private View check2;
+        private View check3;
+        private View[] checks;
 
         ViewHolder(View itemView) {
             super(itemView);
@@ -154,38 +164,55 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
             textView2 = itemView.findViewById(R.id.text2);
             textView3 = itemView.findViewById(R.id.text3);
 
+            cardViews = new CardView[]{itemView.findViewById(R.id.view1), itemView.findViewById(R.id.view2), itemView.findViewById(R.id.view3)};
+
             imageView1 = itemView.findViewById(R.id.image1);
             imageView1.setOnLongClickListener(this);
             imageView1.setOnClickListener(this);
             view1 = itemView.findViewById(R.id.select_image1);
+            check1 = itemView.findViewById(R.id.check1);
 
             imageView2 = itemView.findViewById(R.id.image2);
             imageView2.setOnLongClickListener(this);
             imageView2.setOnClickListener(this);
             view2 = itemView.findViewById(R.id.select_image2);
+            check2 = itemView.findViewById(R.id.check2);
 
             imageView3 = itemView.findViewById(R.id.image3);
             imageView3.setOnLongClickListener(this);
             imageView3.setOnClickListener(this);
             view3 = itemView.findViewById(R.id.select_image3);
+            check3 = itemView.findViewById(R.id.check3);
+
+            textViews = new TextView[]{textView1, textView2, textView3};
+            imageViews = new ImageView[]{imageView1, imageView2, imageView3};
+            views = new View[]{view1, view2, view3};
+            checks = new View[]{check1, check2, check3};
 
         }
 
         @Override public void onClick(View view) {
             if (!isOpen) return;
             boolean select;
+            int visibility;
             if (view.getId() == R.id.image1 && list.get(getAdapterPosition())[0] != null) {
                 select = !list.get(getAdapterPosition())[0].isSelected();
                 list.get(getAdapterPosition())[0].setSelected(select);
-                view1.setVisibility(select ? View.VISIBLE : View.GONE);
+                visibility = select ? View.VISIBLE : View.GONE;
+                view1.setVisibility(visibility);
+                check1.setVisibility(visibility);
             } else if (view.getId() == R.id.image2 && list.get(getAdapterPosition())[1] != null) {
                 select = !list.get(getAdapterPosition())[1].isSelected();
                 list.get(getAdapterPosition())[1].setSelected(select);
-                view2.setVisibility(select ? View.VISIBLE : View.GONE);
+                visibility = select ? View.VISIBLE : View.GONE;
+                view2.setVisibility(visibility);
+                check2.setVisibility(visibility);
             } else if (view.getId() == R.id.image3 && list.get(getAdapterPosition())[2] != null) {
                 select = !list.get(getAdapterPosition())[2].isSelected();
                 list.get(getAdapterPosition())[2].setSelected(select);
-                view3.setVisibility(select ? View.VISIBLE : View.GONE);
+                visibility = select ? View.VISIBLE : View.GONE;
+                view3.setVisibility(visibility);
+                check3.setVisibility(visibility);
             }
             List<Integer> delete = new ArrayList<>();
             for (GroupInfo[] groupInfos : list)
@@ -194,17 +221,20 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
                         delete.add(groupInfo.getId());
             if (onRecyclerClick != null) {
                 if (!delete.isEmpty()) {
+                    isSelect = true;
                     int[] mas = new int[delete.size()];
                     for (int i = 0; i < delete.size(); i++)
                         mas[i] = delete.get(i);
                     onRecyclerClick.onItemClick(mas);
-                } else
+                } else {
                     onRecyclerClick.onItemClick(new int[]{});
+                    isSelect = false;
+                }
             }
         }
 
         @Override public boolean onLongClick(View view) {
-            if (!isOpen) return false;
+            if (!isOpen && !isSelect) return false;
             GroupInfo groupInfo = null;
             if (view.getId() == R.id.image1) {
                 // clicked1 = true;

@@ -31,6 +31,18 @@
         android:background="@drawable/circle"
         android:layout_width="101dp"
         android:layout_height="101dp"/>
+    <View
+        app:layout_constraintBottom_toBottomOf="@id/view1"
+        app:layout_constraintRight_toRightOf="@id/view1"
+
+        android:visibility="gone"
+        android:id="@+id/check1"
+        android:layout_marginEnd="6dp"
+        android:layout_marginBottom="6dp"
+        android:elevation="2dp"
+        android:background="@mipmap/ic_check_circle_28"
+        android:layout_width="24dp"
+        android:layout_height="24dp"/>
     <TextView
         app:layout_constraintTop_toBottomOf="@id/view1"
         app:layout_constraintLeft_toLeftOf="@id/view1"
@@ -70,6 +82,18 @@
         android:background="@drawable/circle"
         android:layout_width="101dp"
         android:layout_height="101dp"/>
+    <View
+        app:layout_constraintBottom_toBottomOf="@id/view2"
+        app:layout_constraintRight_toRightOf="@id/view2"
+
+        android:visibility="gone"
+        android:id="@+id/check2"
+        android:layout_marginEnd="6dp"
+        android:layout_marginBottom="6dp"
+        android:elevation="2dp"
+        android:background="@mipmap/ic_check_circle_28"
+        android:layout_width="24dp"
+        android:layout_height="24dp"/>
     <TextView
         app:layout_constraintTop_toBottomOf="@id/view2"
         app:layout_constraintLeft_toLeftOf="@id/view2"
@@ -109,6 +133,18 @@
         android:background="@drawable/circle"
         android:layout_width="101dp"
         android:layout_height="101dp"/>
+    <View
+        app:layout_constraintBottom_toBottomOf="@id/view3"
+        app:layout_constraintRight_toRightOf="@id/view3"
+
+        android:visibility="gone"
+        android:id="@+id/check3"
+        android:layout_marginEnd="6dp"
+        android:layout_marginBottom="6dp"
+        android:elevation="2dp"
+        android:background="@mipmap/ic_check_circle_28"
+        android:layout_width="24dp"
+        android:layout_height="24dp"/>
     <TextView
         app:layout_constraintTop_toBottomOf="@id/view3"
         app:layout_constraintLeft_toLeftOf="@id/view3"

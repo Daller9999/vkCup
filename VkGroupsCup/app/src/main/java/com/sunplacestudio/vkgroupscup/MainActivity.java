@@ -3,6 +3,7 @@ package com.sunplacestudio.vkgroupscup;
 import android.Manifest;
 import android.content.Intent;
 import android.os.CountDownTimer;
+import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -49,6 +50,8 @@ public class MainActivity extends AppCompatActivity {
     private ConstraintLayout constraintLayoutInfo;
     private RecyclerAdapter recyclerAdapter;
     private int[] leaveIds;
+    private static final int waitForSend = 300;
+    private int scrollY = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,12 +90,17 @@ public class MainActivity extends AppCompatActivity {
         buttonLeave.setVisibility(View.GONE);
         buttonLeave.setOnClickListener((v) -> {
             if (leaveIds == null) return;
+            scrollY -= leaveIds.length / 3 * 500;
             recyclerAdapter.removeIds(leaveIds);
             buttonLeave.setVisibility(View.GONE);
             textViewLeaveCount.setVisibility(View.GONE);
-            // if (leaveIds != null && leaveIds.length !=0)
-            //    new ThreadLeave(leaveIds).start();
+            // if (leaveIds != null && leaveIds.length !=0) // если раскомментировать эти строки, то заработает отписка от групп,
+            //    new ThreadLeave(leaveIds).start();        // но я не хочу отписываться, поэтому закомментировал их.
         });
+
+        View textViewGroups = findViewById(R.id.whiteView);
+        TextView textViewText = findViewById(R.id.mainText);
+        TextView textViewHelp = findViewById(R.id.secondText);
 
         recyclerAdapter = new RecyclerAdapter(getApplicationContext(), constraintLayoutInfo);
         recyclerView.setAdapter(recyclerAdapter);
@@ -106,6 +114,20 @@ public class MainActivity extends AppCompatActivity {
                 leaveIds = null;
                 buttonLeave.setVisibility(View.GONE);
                 textViewLeaveCount.setVisibility(View.GONE);
+            }
+        });
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                scrollY += dy;
+                if (scrollY > 1000) {
+                    textViewGroups.setVisibility(View.VISIBLE);
+                    textViewText.setVisibility(View.GONE);
+                    textViewHelp.setVisibility(View.GONE);
+                } else {
+                    textViewGroups.setVisibility(View.GONE);
+                    textViewText.setVisibility(View.VISIBLE);
+                    textViewHelp.setVisibility(View.VISIBLE);
+                }
             }
         });
     }
@@ -124,6 +146,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * Поток для отписки групп с таймаутом
+     */
     private class ThreadLeave extends Thread {
         private boolean leave = false;
         private int[] ids;
@@ -136,10 +161,10 @@ public class MainActivity extends AppCompatActivity {
             try {
                 for (int id : ids) {
                     leave = false;
-                    sleep(300);
+                    sleep(waitForSend);
                     leaveGroup(id);
                     while (!leave)
-                        sleep(300);
+                        sleep(waitForSend);
                 }
             } catch (InterruptedException ex) {
                 Log.e("mesUri", "some error in leave run");
@@ -178,12 +203,10 @@ public class MainActivity extends AppCompatActivity {
             @Override public void onResult(VKAccessToken res) {
                 getUserGroups();
                 // Пользователь успешно авторизовался
-                Log.i("mesUri", "good go inside");
             }
 
             @Override public void onError(VKError error) {
-                Toast.makeText(getApplicationContext(), "Ошибка при входе в ВК, попробуйте перезайти в приложении и зайти в него снова", Toast.LENGTH_SHORT);
-                Log.e("mesUri", "error vk go in");
+                Toast.makeText(getApplicationContext(), "Ошибка при входе в ВК, попробуйте перезайти в приложение", Toast.LENGTH_SHORT).show();
                 // Произошла ошибка авторизации (например, пользователь запретил авторизацию)
             }
         })) {
@@ -191,10 +214,20 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Загрузка групп пользователя
+     * @param userId ИД пользователя
+     */
     private void loadGroups(int userId) {
         VKApi.groups().
-                get(VKParameters.from(VKApiConst.USER_ID, userId, VKApiConst.EXTENDED, 1, VKApiConst.FIELDS, "description,members_count", VKApiConst.COUNT, 1000, "order", "hints")).
+                get(VKParameters.from(VKApiConst.USER_ID, userId, VKApiConst.EXTENDED, 1, VKApiConst.FIELDS, "description,members_count", VKApiConst.COUNT, 1000)).
                 executeWithListener(new VKRequest.VKRequestListener() {
+                    @Override
+                    public void onError(VKError error) {
+                        super.onError(error);
+                        Log.e("mesUri", "error group");
+                    }
+
                     @Override public void onComplete(VKResponse response) {
                         super.onComplete(response);
                         VKApiCommunityArray vkApiCommunityFulls = (VKApiCommunityArray) response.parsedModel;
@@ -212,11 +245,14 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
+    // грузим по 3 группы в recycler view, именно для этого нужен счётчик
     private int infoCounter = 0;
     private int groupCounter = 0;
+    // Массив с основной информацией по всем группам
     private GroupInfo[] groupInfos;
 
 
+    // Грузим информацию о дате последненго поста
     private void loadWallData() {
         VKApi.wall().
                 get(VKParameters.from(VKApiConst.OWNER_ID, -Math.abs(groups[groupCounter].getId()), VKApiConst.COUNT, 1, VKApiConst.EXTENDED, 1)).
@@ -247,17 +283,14 @@ public class MainActivity extends AppCompatActivity {
                         groupCounter++;
                         if (groupCounter <= groups.length) {
                             sendNewDataFriends();
-                        } else {
-                            recyclerAdapter.addData(groupInfos);
-                            Log.i("mesUri", "load over");
                         }
-
                     }
                 });
     }
 
+    // Тайм аут на отправку
     private void sendNewDataWall() {
-        CountDownTimer countDownTimer = new CountDownTimer(300, 50) {
+        CountDownTimer countDownTimer = new CountDownTimer(waitForSend, 50) {
             @Override public void onTick(long l) {}
             @Override public void onFinish() {
                 loadWallData();
@@ -267,7 +300,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void sendNewDataFriends() {
-        CountDownTimer countDownTimer = new CountDownTimer(300, 50) {
+        CountDownTimer countDownTimer = new CountDownTimer(waitForSend, 50) {
             @Override public void onTick(long l) {}
             @Override public void onFinish() {
                 loadFriend();
@@ -308,8 +341,10 @@ public class MainActivity extends AppCompatActivity {
                         }
                         if (groupCounter != groups.length)
                             sendNewDataWall();
-                        else
+                        else {
+                            // groupInfos[infoCounter] = groups[groupCounter - 1];
                             recyclerAdapter.addData(groupInfos);
+                        }
                     }
                 });
     }

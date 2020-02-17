@@ -27,7 +27,7 @@
 
         android:layout_marginTop="14dp"
         android:layout_marginEnd="14dp"
-        android:background="@drawable/button_clear"
+        android:background="@mipmap/ic_dismiss_24"
         android:id="@+id/buttonClose"
         android:layout_width="24dp"
         android:layout_height="24dp" />
@@ -39,9 +39,9 @@
         android:id="@+id/viewMembers"
         android:layout_marginStart="18.5dp"
         android:layout_marginTop="25dp"
-        android:background="@drawable/members_count"
+        android:background="@mipmap/ic_followers_outline_20"
         android:layout_width="18dp"
-        android:layout_height="19dp"/>
+        android:layout_height="18dp"/>
 
     <TextView
         app:layout_constraintTop_toTopOf="@id/viewMembers"
@@ -63,7 +63,7 @@
         android:id="@+id/viewDescription"
         android:layout_marginStart="18.5dp"
         android:layout_marginTop="21dp"
-        android:background="@drawable/notes"
+        android:background="@mipmap/ic_article_outline_20"
         android:layout_width="18dp"
         android:layout_height="19dp"/>
 
@@ -87,9 +87,9 @@
         android:id="@+id/viewPost"
         android:layout_marginStart="18.5dp"
         android:layout_marginTop="38dp"
-        android:background="@drawable/last_post"
+        android:background="@mipmap/ic_newsfeed_outline_20"
         android:layout_width="18dp"
-        android:layout_height="19dp"/>
+        android:layout_height="18dp"/>
 
     <TextView
         app:layout_constraintTop_toTopOf="@id/viewPost"
