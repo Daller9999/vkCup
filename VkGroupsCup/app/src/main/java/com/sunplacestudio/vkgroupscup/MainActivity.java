@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.sunplacestudio.vkgroupscup.ViewAdapter.RecyclerAdapter;
 import com.vk.sdk.VKAccessToken;
@@ -71,16 +72,8 @@ public class MainActivity extends AppCompatActivity {
 
         if (!VKSdk.isLoggedIn())
             VKSdk.login(this, permissions);
-
-        VKApi.users().get().executeWithListener(new VKRequest.VKRequestListener() {
-            @Override public void onComplete(VKResponse response) {
-                super.onComplete(response);
-                VKList<VKApiUserFull> vkApiUserFulls = (VKList<VKApiUserFull>) response.parsedModel;
-                VKApiUserFull vkApiUserFull = (VKApiUserFull) vkApiUserFulls.toArray()[0];
-                userId = vkApiUserFull.id;
-                loadGroups(userId);
-            }
-        });
+        else
+            getUserGroups();
 
         constraintLayoutInfo = findViewById(R.id.constrainLayout);
         constraintLayoutInfo.setVisibility(View.GONE);
@@ -113,6 +106,19 @@ public class MainActivity extends AppCompatActivity {
                 leaveIds = null;
                 buttonLeave.setVisibility(View.GONE);
                 textViewLeaveCount.setVisibility(View.GONE);
+            }
+        });
+    }
+
+    private void getUserGroups() {
+        VKApi.users().get().executeWithListener(new VKRequest.VKRequestListener() {
+            @Override
+            public void onComplete(VKResponse response) {
+                super.onComplete(response);
+                VKList<VKApiUserFull> vkApiUserFulls = (VKList<VKApiUserFull>) response.parsedModel;
+                VKApiUserFull vkApiUserFull = (VKApiUserFull) vkApiUserFulls.toArray()[0];
+                userId = vkApiUserFull.id;
+                loadGroups(userId);
             }
         });
     }
@@ -170,11 +176,13 @@ public class MainActivity extends AppCompatActivity {
         if (!VKSdk.onActivityResult(requestCode, resultCode, data, new VKCallback<VKAccessToken>() {
 
             @Override public void onResult(VKAccessToken res) {
+                getUserGroups();
                 // Пользователь успешно авторизовался
                 Log.i("mesUri", "good go inside");
             }
 
             @Override public void onError(VKError error) {
+                Toast.makeText(getApplicationContext(), "Ошибка при входе в ВК, попробуйте перезайти в приложении и зайти в него снова", Toast.LENGTH_SHORT);
                 Log.e("mesUri", "error vk go in");
                 // Произошла ошибка авторизации (например, пользователь запретил авторизацию)
             }
@@ -185,7 +193,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadGroups(int userId) {
         VKApi.groups().
-                get(VKParameters.from(VKApiConst.USER_ID, userId, VKApiConst.EXTENDED, 1, VKApiConst.FIELDS, "description,members_count", VKApiConst.COUNT, 1000)).
+                get(VKParameters.from(VKApiConst.USER_ID, userId, VKApiConst.EXTENDED, 1, VKApiConst.FIELDS, "description,members_count", VKApiConst.COUNT, 1000, "order", "hints")).
                 executeWithListener(new VKRequest.VKRequestListener() {
                     @Override public void onComplete(VKResponse response) {
                         super.onComplete(response);
