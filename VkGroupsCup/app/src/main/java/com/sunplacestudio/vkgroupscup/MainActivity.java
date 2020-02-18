@@ -112,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
                     textViewGroups.setVisibility(View.VISIBLE);
                     textViewText.setVisibility(View.GONE);
                     textViewHelp.setVisibility(View.GONE);
-                } else {
+                } else if (scrollY < 500) {
                     textViewGroups.setVisibility(View.GONE);
                     textViewText.setVisibility(View.VISIBLE);
                     textViewHelp.setVisibility(View.VISIBLE);
