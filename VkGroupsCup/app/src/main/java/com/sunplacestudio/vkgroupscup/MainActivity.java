@@ -18,6 +18,7 @@ import android.widget.Toast;
 import com.sunplacestudio.vkgroupscup.ViewAdapter.RecyclerAdapter;
 import com.vk.sdk.VKAccessToken;
 import com.vk.sdk.VKCallback;
+import com.vk.sdk.VKScope;
 import com.vk.sdk.VKSdk;
 import com.vk.sdk.api.VKApi;
 import com.vk.sdk.api.VKApiConst;
@@ -59,19 +60,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         // VKSdk.initialize(this.getApplicationContext());
 
-        String[] permissions = {
-                Manifest.permission.READ_EXTERNAL_STORAGE,
-                Manifest.permission.ACCESS_COARSE_LOCATION,
-                Manifest.permission.ACCESS_WIFI_STATE,
-                Manifest.permission.CHANGE_WIFI_STATE,
-                Manifest.permission.ACCESS_NETWORK_STATE,
-                Manifest.permission.CHANGE_NETWORK_STATE,
-                Manifest.permission.INTERNET,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                /*Manifest.permission.RECORD_AUDIO,
-                Manifest.permission.WAKE_LOCK,
-                Manifest.permission.RECEIVE_BOOT_COMPLETED*/
-        };
+        String[] permissions = {VKScope.GROUPS};
 
         if (!VKSdk.isLoggedIn())
             VKSdk.login(this, permissions);
