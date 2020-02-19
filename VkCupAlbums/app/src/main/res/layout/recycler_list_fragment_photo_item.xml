@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="1dp"
+    android:layout_marginBottom="1dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <android.support.v7.widget.CardView
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toLeftOf="@id/view2"
+
+        android:layout_marginBottom="2dp"
+        android:layout_marginEnd="2dp"
+        android:layout_width="118dp"
+        android:layout_height="118dp"
+        android:id="@+id/view1">
+        <ImageView
+            android:scaleType="centerCrop"
+            android:id="@+id/image1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+        <View
+            android:id="@+id/viewDelete1"
+            android:visibility="gone"
+            android:background="@color/colorGrayAlpha"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+    </android.support.v7.widget.CardView>
+    <Button
+        app:layout_constraintTop_toTopOf="@id/view1"
+        app:layout_constraintRight_toRightOf="@id/view1"
+
+        android:visibility="gone"
+        android:id="@+id/check1"
+        android:elevation="2dp"
+        android:background="@mipmap/ic_remove_24"
+        android:layout_width="24dp"
+        android:layout_height="24dp"/>
+
+
+    <android.support.v7.widget.CardView
+        android:id="@+id/view2"
+        android:layout_width="118dp"
+        android:layout_height="118dp"
+
+        android:layout_marginBottom="2dp"
+        android:layout_marginEnd="2dp"
+        app:layout_constraintLeft_toRightOf="@id/view1"
+        app:layout_constraintRight_toLeftOf="@id/view3"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintTop_toTopOf="parent">
+        <ImageView
+            android:scaleType="centerCrop"
+            android:id="@+id/image2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+        <View
+            android:id="@+id/viewDelete2"
+            android:visibility="gone"
+            android:background="@color/colorGrayAlpha"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+    </android.support.v7.widget.CardView>
+    <Button
+        app:layout_constraintTop_toTopOf="@id/view2"
+        app:layout_constraintRight_toRightOf="@id/view2"
+
+        android:visibility="gone"
+        android:id="@+id/check2"
+        android:elevation="2dp"
+        android:background="@mipmap/ic_remove_24"
+        android:layout_width="24dp"
+        android:layout_height="24dp"/>
+
+
+
+    <android.support.v7.widget.CardView
+        android:id="@+id/view3"
+        android:layout_width="118dp"
+        android:layout_height="118dp"
+
+        android:layout_marginBottom="2dp"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintLeft_toRightOf="@id/view2"
+        app:layout_constraintTop_toTopOf="parent">
+        <ImageView
+            android:scaleType="centerCrop"
+            android:id="@+id/image3"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+        <View
+            android:id="@+id/viewDelete3"
+            android:visibility="gone"
+            android:background="@color/colorGrayAlpha"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+    </android.support.v7.widget.CardView>
+    <Button
+        app:layout_constraintTop_toTopOf="@id/view3"
+        app:layout_constraintRight_toRightOf="@id/view3"
+
+        android:visibility="gone"
+        android:id="@+id/check3"
+        android:elevation="2dp"
+        android:background="@mipmap/ic_remove_24"
+        android:layout_width="24dp"
+        android:layout_height="24dp"/>
+
+</android.support.constraint.ConstraintLayout>

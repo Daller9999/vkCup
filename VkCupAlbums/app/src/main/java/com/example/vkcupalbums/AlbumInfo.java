@@ -14,21 +14,12 @@ public class AlbumInfo {
     private int photoCount;
     private int id;
     private boolean isRemove = false;
-    private boolean shake = false;
 
     public AlbumInfo(String description, int id, Bitmap bitmap, int count) {
         bitmapMain = bitmap;
         this.id = id;
         this.description = description;
         this.photoCount = count;
-    }
-
-    public void setShake(boolean b) {
-        shake = b;
-    }
-
-    public boolean isShake() {
-        return shake && !isRemove;
     }
 
     public void setRemove() {

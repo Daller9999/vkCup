@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -12,6 +13,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.example.vkcupalbums.Fragments.FragmentAlbums;
+import com.example.vkcupalbums.Fragments.FragmentPhotoAlbum;
 import com.example.vkcupalbums.ViewAdapter.RecyclerAdapter;
 import com.vk.sdk.VKAccessToken;
 import com.vk.sdk.VKCallback;
@@ -56,8 +58,9 @@ public class MainActivity extends AppCompatActivity {
         else {
             key = VKAccessToken.currentToken().accessToken;
             userId = Integer.valueOf(VKAccessToken.currentToken().userId);
-            loadFragmentAlbum();
+            loadFragmentAlbums();
         }
+        Log.e("mesUri", "api is : " + VKSdk.getApiVersion());
     }
 
     @Override
@@ -68,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
             public void onResult(VKAccessToken res) {
                 key = res.accessToken;
                 userId = Integer.valueOf(res.userId);
-                loadFragmentAlbum();
+                loadFragmentAlbums();
                 // Пользователь успешно авторизовался
             }
 
@@ -82,8 +85,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void loadFragmentAlbum() {
+    public void loadFragmentAlbums() {
         getSupportFragmentManager().beginTransaction().replace(R.id.container, new FragmentAlbums()).commit();
+    }
+
+    public void loadFragmentPhoto(int id) {
+        FragmentPhotoAlbum fragmentPhotoAlbum = new FragmentPhotoAlbum();
+        fragmentPhotoAlbum.setAlbumId(id);
+        getSupportFragmentManager().beginTransaction().replace(R.id.container, fragmentPhotoAlbum).commit();
     }
 
 }

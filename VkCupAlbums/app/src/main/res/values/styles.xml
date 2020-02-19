@@ -5,7 +5,7 @@
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/vk_white</item>
         <item name="colorPrimaryDark">@color/vk_grey_color</item>
-        <item name="colorAccent">@color/colorAccent</item>
+        <item name="colorAccent">@color/vk_color</item>
     </style>
 
 </resources>

@@ -2,6 +2,7 @@ package com.example.vkcupalbums.ViewAdapter;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.constraint.ConstraintLayout;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -14,39 +15,27 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.vkcupalbums.AlbumInfo;
+import com.example.vkcupalbums.PhotoInfo;
 import com.example.vkcupalbums.R;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
-public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHolder> {
-    private volatile List<AlbumInfo[]> list;
+public class RecyclerAdapterPhotos extends RecyclerView.Adapter<RecyclerAdapterPhotos.ViewHolder> {
+    private volatile List<PhotoInfo[]> list;
     private LayoutInflater layoutInflater;
     private OnRecyclerClick onRecyclerClick;
 
     private volatile boolean edit = false;
 
-    public void addAlbumInfo(AlbumInfo albumInfo) {
-        if (!list.isEmpty()) {
-            int pos = list.size() - 1;
-            AlbumInfo[] albumInfos = list.get(pos);
-            if (albumInfos[0] != null && albumInfos[1] == null) {
-                albumInfos[1] = albumInfo;
-                list.set(pos, albumInfos);
-            } else
-                list.add(new AlbumInfo[]{albumInfo, null});
-        } else
-            list.add(new AlbumInfo[]{albumInfo, null});
-        notifyDataSetChanged();
-    }
 
     public void setEdit(boolean b) {
         edit = b;
         if (!edit) {
-            List<AlbumInfo> albumInfoAll = new ArrayList<>();
+            List<PhotoInfo> albumInfoAll = new ArrayList<>();
             Vector<Integer> removeIds = new Vector<>();
-            for (AlbumInfo[] albumInfos : list) {
+            for (PhotoInfo[] albumInfos : list) {
                 if (albumInfos[0] != null) {
                     if (!albumInfos[0].isRemove())
                         albumInfoAll.add(albumInfos[0]);
@@ -60,14 +49,6 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
                     else
                         removeIds.addElement(albumInfos[1].getId());
                 }
-            }
-
-            if (!removeIds.isEmpty()) {
-                int[] mas = new int[removeIds.size()];
-                for (int i = 0; i < removeIds.size(); i++)
-                    mas[i] = removeIds.elementAt(i);
-                if (onRecyclerClick != null)
-                    onRecyclerClick.onRemoveIds(mas);
             }
             setList(albumInfoAll);
         } else
@@ -93,12 +74,12 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
         setList(newList);
     }*/
 
-    public void addAlbumInfo(AlbumInfo[] albumInfos) {
+    public void addPhotoInfo(PhotoInfo[] albumInfos) {
         list.add(albumInfos);
         notifyItemInserted(list.size() - 1);
     }
 
-    public RecyclerAdapter(Context context) {
+    public RecyclerAdapterPhotos(Context context) {
         layoutInflater = LayoutInflater.from(context);
         shakeAnimation = AnimationUtils.loadAnimation(context, R.anim.shake);
         list = new ArrayList<>();
@@ -109,12 +90,12 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
     }
 
 
-    private void setList(List<AlbumInfo> groupInfos) {
+    private void setList(List<PhotoInfo> photoInfos) {
         list = new ArrayList<>();
-        for (int i = 0; i < groupInfos.size(); i += 2) {
-            AlbumInfo[] groupInfosNew = new AlbumInfo[2];
-            for (int j = 0; j < 2 && j + i < groupInfos.size(); j++)
-                groupInfosNew[j] = groupInfos.get(j + i);
+        for (int i = 0; i < photoInfos.size(); i += 3) {
+            PhotoInfo[] groupInfosNew = new PhotoInfo[3];
+            for (int j = 0; j < 3 && j + i < photoInfos.size(); j++)
+                groupInfosNew[j] = photoInfos.get(j + i);
             list.add(groupInfosNew);
         }
         notifyDataSetChanged();
@@ -126,27 +107,21 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
     }*/
 
     @Override @NonNull public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = layoutInflater.inflate(R.layout.recycler_list_fragment_item, parent, false);
+        View view = layoutInflater.inflate(R.layout.recycler_list_fragment_photo_item, parent, false);
         return new ViewHolder(view);
     }
 
     @Override public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        AlbumInfo[] albumInfos = list.get(position);
+        PhotoInfo[] photoInfos = list.get(position);
         int visibility;
         boolean enable;
 
-        for (int i = 0; i < albumInfos.length; i++) {
-            if (albumInfos[i] != null) {
-                if (!albumInfos[i].isRemove()) {
+        for (int i = 0; i < photoInfos.length; i++) {
+            if (photoInfos[i] != null) {
+                if (!photoInfos[i].isRemove()) {
                     holder.viewsDelete[i].setVisibility(View.GONE);
-                    if (albumInfos[i].getDescription() != null)
-                        holder.textViewsA[i].setText(albumInfos[i].getDescription());
-                    if (albumInfos[i].getPhotoCount() != -1)
-                        holder.textViewsB[i].setText(albumInfos[i].getPhotoCountString());
-                    if (albumInfos[i].getBitmapMain() != null)
-                        holder.imageViews[i].setImageBitmap(albumInfos[i].getBitmapMain());
-                    else
-                        holder.imageViews[i].setImageBitmap(null);
+                    if (photoInfos[i].getBitmap() != null)
+                        holder.imageViews[i].setImageBitmap(photoInfos[i].getBitmap());
 
                     holder.checks[i].setVisibility(edit ? View.VISIBLE : View.GONE);
                     if (edit)
@@ -162,11 +137,9 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
                 holder.checks[i].setVisibility(View.GONE);
                 holder.cardViews[i].clearAnimation();
                 holder.viewsDelete[i].setVisibility(View.GONE);
-                holder.textViewsA[i].setText("");
-                holder.textViewsB[i].setText("");
             }
-            visibility = albumInfos[i] == null ? View.INVISIBLE : View.VISIBLE;
-            enable = albumInfos[i] != null;
+            visibility = photoInfos[i] == null ? View.INVISIBLE : View.VISIBLE;
+            enable = photoInfos[i] != null;
             holder.imageViews[i].setEnabled(enable);
             holder.cardViews[i].setVisibility(visibility);
         }
@@ -187,20 +160,10 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
 
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
 
-        private TextView textView1a;
-        private TextView textView1b;
-        private TextView textView2a;
-        private TextView textView2b;
-        private TextView[] textViewsA;
-        private TextView[] textViewsB;
         private CardView[] cardViews;
 
-        private ImageView imageView1;
-        private ImageView imageView2;
         private ImageView[] imageViews;
 
-        private Button check1;
-        private Button check2;
         private Button[] checks;
 
         private View[] viewsDelete;
@@ -209,54 +172,35 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
 
         ViewHolder(View itemView) {
             super(itemView);
-            textView1a = itemView.findViewById(R.id.text1a);
-            textView1b = itemView.findViewById(R.id.text1b);
-
-            textView2a = itemView.findViewById(R.id.text2a);
-            textView2b = itemView.findViewById(R.id.text2b);
-
-            textViewsA = new TextView[]{textView1a, textView2a};
-            textViewsB = new TextView[]{textView1b, textView2b};
-
-            cardViews = new CardView[]{itemView.findViewById(R.id.view1), itemView.findViewById(R.id.view2)};
+            cardViews = new CardView[]{itemView.findViewById(R.id.view1), itemView.findViewById(R.id.view2), itemView.findViewById(R.id.view3)};
+            imageViews = new ImageView[]{itemView.findViewById(R.id.image1), itemView.findViewById(R.id.image2), itemView.findViewById(R.id.image3)};
+            checks = new Button[]{itemView.findViewById(R.id.check1), itemView.findViewById(R.id.check2), itemView.findViewById(R.id.check3)};
+            viewsDelete = new View[]{itemView.findViewById(R.id.viewDelete1), itemView.findViewById(R.id.viewDelete2), itemView.findViewById(R.id.viewDelete3)};
             ids = new int[]{R.id.image1, R.id.image2};
-
-            imageView1 = itemView.findViewById(R.id.image1);
-            imageView1.setOnLongClickListener(this);
-            imageView1.setOnClickListener(this);
-            check1 = itemView.findViewById(R.id.check1);
-            check1.setOnClickListener(this);
-
-            imageView2 = itemView.findViewById(R.id.image2);
-            imageView2.setOnLongClickListener(this);
-            imageView2.setOnClickListener(this);
-            check2 = itemView.findViewById(R.id.check2);
-            check2.setOnClickListener(this);
-
-            // textViews = new TextView[]{textView1, textView2, textView3};
-            imageViews = new ImageView[]{imageView1, imageView2};
-            checks = new Button[]{check1, check2};
-            viewsDelete = new View[]{itemView.findViewById(R.id.viewDelete1), itemView.findViewById(R.id.viewDelete2)};
+            for (int i = 0; i < imageViews.length; i++) {
+                imageViews[i].setOnClickListener(this);
+                imageViews[i].setOnLongClickListener(this);
+                checks[i].setOnClickListener(this);
+            }
 
         }
 
         @Override public void onClick(View view) {
             int pos = getAdapterPosition();
             if (edit) {
-                if (view.getId() == R.id.check1 || view.getId() == R.id.check2) {
-                    int element = view.getId() == R.id.check1 ? 0 : 1;
-                    list.get(pos)[element].setRemove();
-                    checkAnimation();
-                    viewsDelete[element].setVisibility(View.VISIBLE);
-                }
+                for (int i = 0; i < checks.length; i++)
+                    if (checks[i].getId() == view.getId()) {
+                        list.get(pos)[i].setRemove();
+                        checkAnimation();
+                        viewsDelete[i].setVisibility(View.VISIBLE);
+                        return;
+                    }
             } else if (onRecyclerClick != null) {
-                int element = -1;
-                if (view.getId() == R.id.image1)
-                    element = 0;
-                else if (view.getId() == R.id.image2)
-                    element = 1;
-                if (element != -1)
-                    onRecyclerClick.onItemClick(list.get(pos)[element].getId());
+                for (int i = 0; i < imageViews.length; i++)
+                    if (imageViews[i].getId() == view.getId()) {
+                        onRecyclerClick.onItemClick(list.get(pos)[i].getId());
+                        return;
+                    }
             }
 
         }
@@ -269,13 +213,13 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
 
         private void checkAnimation() {
             int pos = getAdapterPosition();
-            AlbumInfo[] albumInfos = list.get(pos);
-            if (albumInfos != null && albumInfos.length != 0) {
-                for (int i = 0; i < albumInfos.length; i++) {
-                    if (albumInfos[i] != null) {
-                        if (edit && !albumInfos[i].isRemove())
+            PhotoInfo[] photoInfos = list.get(pos);
+            if (photoInfos != null && photoInfos.length != 0) {
+                for (int i = 0; i < photoInfos.length; i++) {
+                    if (photoInfos[i] != null) {
+                        if (edit && !photoInfos[i].isRemove())
                             cardViews[i].startAnimation(shakeAnimation);
-                        else if (albumInfos[i].isRemove()) {
+                        else if (photoInfos[i].isRemove()) {
                             cardViews[i].clearAnimation();
                             viewsDelete[i].setVisibility(View.VISIBLE);
                             checks[i].setVisibility(View.GONE);
@@ -290,7 +234,6 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
     public interface OnRecyclerClick {
         void onItemClick(int id);
         void onLongClick();
-        void onRemoveIds(int[] ids);
     }
 
     /*private void openGroupInfo(GroupInfo groupInfo) {
