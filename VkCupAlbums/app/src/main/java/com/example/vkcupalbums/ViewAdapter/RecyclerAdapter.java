@@ -8,6 +8,8 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -33,6 +35,8 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
     private volatile boolean isOpen = true;
     private volatile boolean isSelect = false;
 
+    private Animation shakeAnimation;
+
     public void setOnRecyclerClick(OnRecyclerClick onRecyclerClick) {
         this.onRecyclerClick = onRecyclerClick;
     }
@@ -55,9 +59,10 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
         notifyItemInserted(list.size() - 1);
     }
 
-    public RecyclerAdapter(Context context, List<AlbumInfo> albumInfos) {
+    public RecyclerAdapter(Context context) {
         layoutInflater = LayoutInflater.from(context);
-        setList(albumInfos);
+        shakeAnimation = AnimationUtils.loadAnimation(context, R.anim.shake);
+        list = new ArrayList<>();
     }
 
     private void hideShow() {
@@ -94,18 +99,27 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
 
         for (int i = 0; i < albumInfos.length; i++) {
             if (albumInfos[i] != null) {
-                if (albumInfos[i].getDescription() != null)
-                    holder.textViewsA[i].setText(albumInfos[i].getDescription());
-                if (albumInfos[i].getPhotoCount() != -1)
-                    holder.textViewsB[i].setText(albumInfos[i].getPhotoCountString());
-                if (albumInfos[i].getBitmapMain() != null)
-                    holder.imageViews[i].setImageBitmap(albumInfos[i].getBitmapMain());
-                /*visibility = albumInfos[i].isSelected() ? View.VISIBLE : View.GONE;
-                holder.views[i].setVisibility(visibility);
-                holder.checks[i].setVisibility(visibility);*/
+                if (!albumInfos[i].isRemove()) {
+                    holder.viewsDelete[i].setVisibility(View.GONE);
+                    if (albumInfos[i].getDescription() != null)
+                        holder.textViewsA[i].setText(albumInfos[i].getDescription());
+                    if (albumInfos[i].getPhotoCount() != -1)
+                        holder.textViewsB[i].setText(albumInfos[i].getPhotoCountString());
+                    if (albumInfos[i].getBitmapMain() != null)
+                        holder.imageViews[i].setImageBitmap(albumInfos[i].getBitmapMain());
+
+                    boolean shake = albumInfos[i].isShake();
+                    holder.checks[i].setVisibility(shake ? View.VISIBLE : View.GONE);
+                    if (shake)
+                        holder.cardViews[i].startAnimation(shakeAnimation);
+                    else
+                        holder.cardViews[i].clearAnimation();
+                } else {
+                    holder.viewsDelete[i].setVisibility(View.VISIBLE);
+                }
             } else {
-                holder.views[i].setVisibility(View.GONE);
                 holder.checks[i].setVisibility(View.GONE);
+                holder.cardViews[i].clearAnimation();
             }
             visibility = albumInfos[i] == null ? View.INVISIBLE : View.VISIBLE;
             enable = albumInfos[i] != null;
@@ -113,6 +127,15 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
             holder.imageViews[i].setEnabled(enable);
             holder.cardViews[i].setVisibility(visibility);
         }
+    }
+
+    @Override public void onViewAttachedToWindow(@NonNull ViewHolder holder) {
+        holder.checkAnimation();
+    }
+
+    @Override public void onViewDetachedFromWindow(@NonNull ViewHolder holder) {
+        for (CardView cardView : holder.cardViews)
+            cardView.clearAnimation();
     }
 
     @Override public int getItemCount() {
@@ -133,13 +156,13 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
         private ImageView imageView2;
         private ImageView[] imageViews;
 
-        private View view1;
-        private View view2;
-        private View[] views;
-
         private View check1;
         private View check2;
         private View[] checks;
+
+        private View[] viewsDelete;
+
+        int[] ids;
 
         ViewHolder(View itemView) {
             super(itemView);
@@ -153,27 +176,35 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
             textViewsB = new TextView[]{textView1b, textView2b};
 
             cardViews = new CardView[]{itemView.findViewById(R.id.view1), itemView.findViewById(R.id.view2)};
+            ids = new int[]{R.id.image1, R.id.image2};
 
             imageView1 = itemView.findViewById(R.id.image1);
             imageView1.setOnLongClickListener(this);
             imageView1.setOnClickListener(this);
-            // view1 = itemView.findViewById(R.id.select_image1);
             check1 = itemView.findViewById(R.id.check1);
+            check1.setOnClickListener(this);
 
             imageView2 = itemView.findViewById(R.id.image2);
             imageView2.setOnLongClickListener(this);
             imageView2.setOnClickListener(this);
-            // view2 = itemView.findViewById(R.id.select_image2);
             check2 = itemView.findViewById(R.id.check2);
+            check2.setOnClickListener(this);
 
             // textViews = new TextView[]{textView1, textView2, textView3};
             imageViews = new ImageView[]{imageView1, imageView2};
-            views = new View[]{view1, view2};
             checks = new View[]{check1, check2};
+            viewsDelete = new View[]{itemView.findViewById(R.id.viewDelete1), itemView.findViewById(R.id.viewDelete2)};
 
         }
 
         @Override public void onClick(View view) {
+            int pos = getAdapterPosition();
+            if (view.getId() == R.id.viewDelete1) {
+                list.get(pos)[0].setRemove();
+                checkAnimation();
+                viewsDelete[0].setVisibility(View.VISIBLE);
+            }
+
             /*if (!isOpen) return;
             boolean select;
             int visibility;
@@ -216,23 +247,41 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
         }
 
         @Override public boolean onLongClick(View view) {
-            /*if (!isOpen && !isSelect) return false;
-            GroupInfo groupInfo = null;
-            if (view.getId() == R.id.image1) {
-                // clicked1 = true;
-                groupInfo = list.get(getAdapterPosition())[0];
-            } else if (view.getId() == R.id.image2) {
-                // clicked2 = true;
-                groupInfo = list.get(getAdapterPosition())[1];
-            } else if (view.getId() == R.id.image3) {
-                // clicked3 = true;
-                groupInfo = list.get(getAdapterPosition())[2];
+            int pos = getAdapterPosition();
+            AlbumInfo[] albumInfos = list.get(pos);
+            if (albumInfos != null && albumInfos.length != 0) {
+                for (int i = 0; i < albumInfos.length; i++) {
+                    if (albumInfos[i] != null && view.getId() == ids[i]) {
+                        boolean shake = !list.get(pos)[i].isShake();
+                        checks[i].setVisibility(shake ? View.VISIBLE : View.GONE);
+                        if (shake)
+                            cardViews[i].startAnimation(shakeAnimation);
+                        else
+                            cardViews[i].clearAnimation();
+                        list.get(pos)[i].setShake(shake);
+                    }
+                }
             }
-            if (groupInfo != null)
-                openGroupInfo(groupInfo);*/
             return false;
         }
+
+        private void checkAnimation() {
+            int pos = getAdapterPosition();
+            AlbumInfo[] albumInfos = list.get(pos);
+            if (albumInfos != null && albumInfos.length != 0) {
+                for (int i = 0; i < albumInfos.length; i++) {
+                    if (albumInfos[i] != null) {
+                        boolean shake = list.get(pos)[i].isShake();
+                        if (shake)
+                            cardViews[i].startAnimation(shakeAnimation);
+                        else
+                            cardViews[i].clearAnimation();
+                    }
+                }
+            }
+        }
     }
+
 
     public interface OnRecyclerClick {
         void onItemClick(int[] id);

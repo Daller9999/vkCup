@@ -2,6 +2,8 @@ package com.example.vkcupalbums;
 
 import android.Manifest;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -9,6 +11,7 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.example.vkcupalbums.Fragments.FragmentAlbums;
 import com.example.vkcupalbums.ViewAdapter.RecyclerAdapter;
 import com.vk.sdk.VKAccessToken;
 import com.vk.sdk.VKCallback;
@@ -32,6 +35,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,10 +43,6 @@ public class MainActivity extends AppCompatActivity {
 
     private int userId;
     private String key;
-    private AlbumInfo[] albumInfos;
-
-    private RecyclerView recyclerView;
-    private RecyclerAdapter recyclerAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,23 +55,25 @@ public class MainActivity extends AppCompatActivity {
             VKSdk.login(this, otherPermissions);
         else {
             key = VKAccessToken.currentToken().accessToken;
-            getUserAlbums();
+            userId = Integer.valueOf(VKAccessToken.currentToken().userId);
+            loadFragmentAlbum();
         }
-        recyclerView = findViewById(R.id.recyclerView);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (!VKSdk.onActivityResult(requestCode, resultCode, data, new VKCallback<VKAccessToken>() {
 
-            @Override public void onResult(VKAccessToken res) {
+            @Override
+            public void onResult(VKAccessToken res) {
                 key = res.accessToken;
-                getUserAlbums();
+                userId = Integer.valueOf(res.userId);
+                loadFragmentAlbum();
                 // Пользователь успешно авторизовался
             }
 
-            @Override public void onError(VKError error) {
+            @Override
+            public void onError(VKError error) {
                 Toast.makeText(getApplicationContext(), "Ошибка при входе в ВК, попробуйте перезайти в приложение", Toast.LENGTH_SHORT).show();
                 // Произошла ошибка авторизации (например, пользователь запретил авторизацию)
             }
@@ -80,120 +82,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void loadTokens() {
-        VKRequest vkRequest = new VKRequest("account.getAppPermissions", VKParameters.from(VKApiConst.USER_ID, userId));
-        vkRequest.executeWithListener(new VKRequest.VKRequestListener() {
-            @Override
-            public void onComplete(VKResponse response) {
-                super.onComplete(response);
-            }
-
-            @Override
-            public void onError(VKError error) {
-                super.onError(error);
-            }
-        });
+    private void loadFragmentAlbum() {
+        getSupportFragmentManager().beginTransaction().replace(R.id.container, new FragmentAlbums()).commit();
     }
 
-    private void getUserAlbums() {
-        VKApi.users().get().executeWithListener(new VKRequest.VKRequestListener() {
-            @Override
-            public void onComplete(VKResponse response) {
-                super.onComplete(response);
-                VKList<VKApiUserFull> vkApiUserFulls = (VKList<VKApiUserFull>) response.parsedModel;
-                VKApiUserFull vkApiUserFull = (VKApiUserFull) vkApiUserFulls.toArray()[0];
-                userId = vkApiUserFull.id;
-                loadUserAlbums();
-                // loadGroups(userId);
-            }
-        });
-    }
-
-    private void loadUserPhotoAlbum() {
-        VKRequest vkRequest = new VKRequest("photos.get", VKParameters.from(VKApiConst.OWNER_ID, userId, VKApiConst.ALBUM_ID, "profile", VKApiConst.COUNT, 1000));
-        vkRequest.executeWithListener(new VKRequest.VKRequestListener() {
-            @Override
-            public void onComplete(VKResponse response) {
-                super.onComplete(response);
-            }
-
-            @Override
-            public void onError(VKError error) {
-                super.onError(error);
-            }
-        });
-        // VKApi.photos().
-    }
-
-    private void loadUserAlbums() {
-        VKRequest vkRequest = new VKRequest("photos.getAlbums", VKParameters.from(VKApiConst.OWNER_ID, userId, "need_system", 1, "need_covers", 1));
-        vkRequest.executeWithListener(new VKRequest.VKRequestListener() {
-            @Override
-            public void onComplete(VKResponse response) {
-                super.onComplete(response);
-                JSONObject jsonObject = response.json;
-                try {
-                    JSONObject jsonObject1 = ((JSONObject) jsonObject.get("response"));
-                    int count = jsonObject1.getInt("count");
-                    JSONArray data = jsonObject1.getJSONArray("items");
-
-                    albumInfos = new AlbumInfo[count];
-                    List<AlbumInfo> albumInfos = new ArrayList<>();
-                    VKApiPhotoAlbum vkApiPhotoAlbum = new VKApiPhotoAlbum();
-
-                    int j = 0;
-                    for (int i = 0; i < count; i += 2) {
-                        vkApiPhotoAlbum = vkApiPhotoAlbum.parse((JSONObject) data.get(i));
-
-                        albumInfos.add(new AlbumInfo(vkApiPhotoAlbum.title, vkApiPhotoAlbum.id, vkApiPhotoAlbum.thumb_src, vkApiPhotoAlbum.size, null));
-                        if (i % 2 == 0)
-                            j++;
-                    }
-                    recyclerAdapter = new RecyclerAdapter(getApplicationContext(), albumInfos);
-                    recyclerView.setAdapter(recyclerAdapter);
-                } catch (JSONException ex) {
-                    Log.e("mesUri", "json error : " + ex.getMessage());
-                }
-            }
-
-            @Override
-            public void onError(VKError error) {
-                super.onError(error);
-            }
-        });
-        // VKApi.photos().
-    }
-
-    private class ThreadLoad extends Thread implements AlbumInfo.OnPhotoLoad {
-        private VKApiPhotoAlbum[] vkApiPhotoAlbums;
-        private volatile boolean wait = true;
-
-        ThreadLoad(VKApiPhotoAlbum[] vkApiPhotoAlbums) {
-            this.vkApiPhotoAlbums = vkApiPhotoAlbums;
-        }
-
-        @Override public void run() {
-            try {
-                VKApiPhotoAlbum vkApiPhotoAlbum = vkApiPhotoAlbums[0];
-                AlbumInfo albumInfo1 = new AlbumInfo(vkApiPhotoAlbum.title, vkApiPhotoAlbum.id, vkApiPhotoAlbum.thumb_src, vkApiPhotoAlbum.size, this);
-                while (wait)
-                    sleep(50);
-
-                wait = true;
-                VKApiPhotoAlbum vkApiPhotoAlbum2 = vkApiPhotoAlbums[0];
-                AlbumInfo albumInfo2 = new AlbumInfo(vkApiPhotoAlbum2.title, vkApiPhotoAlbum2.id, vkApiPhotoAlbum2.thumb_src, vkApiPhotoAlbum2.size, this);
-                while (wait)
-                    sleep(50);
-
-                AlbumInfo[] albumInfos = {albumInfo1, albumInfo2};
-                runOnUiThread(() -> recyclerAdapter.addAlbumInfo(albumInfos));
-            } catch (InterruptedException ex) {
-                //
-            }
-        }
-
-        @Override public void onLoad() {
-            wait = false;
-        }
-    }
 }

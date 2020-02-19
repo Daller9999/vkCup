@@ -14,15 +14,25 @@ public class AlbumInfo {
     private int photoCount;
     private int id;
     private boolean isRemove = false;
+    private boolean shake = false;
 
-    private OnPhotoLoad onPhotoLoad;
-
-    public AlbumInfo(String description, int id, String httpMain, int count, OnPhotoLoad onPhotoLoad) {
-        new DownloadImageTask(httpMain).execute();
+    public AlbumInfo(String description, int id, Bitmap bitmap, int count) {
+        bitmapMain = bitmap;
         this.id = id;
         this.description = description;
         this.photoCount = count;
-        this.onPhotoLoad = onPhotoLoad;
+    }
+
+    public void setShake(boolean b) {
+        shake = b;
+    }
+
+    public boolean isShake() {
+        return shake && !isRemove;
+    }
+
+    public void setRemove() {
+        isRemove = true;
     }
 
     public void setRemove(boolean remove) { isRemove = remove; }
@@ -38,33 +48,4 @@ public class AlbumInfo {
     public int getPhotoCount() { return photoCount; }
 
     public String getPhotoCountString() { return String.valueOf(photoCount) + " фотографий"; }
-
-    private class DownloadImageTask extends AsyncTask<Void, Void, Bitmap> {
-        String http;
-
-        DownloadImageTask(String http) {
-            this.http = http;
-        }
-
-        protected Bitmap doInBackground(Void... urls) {
-            Bitmap mIcon11 = null;
-            try {
-                InputStream in = new java.net.URL(http).openStream();
-                mIcon11 = BitmapFactory.decodeStream(in);
-            } catch (Exception e) {
-                Log.e("mesUri", "error to load image : " + e.getMessage());
-            }
-            return mIcon11;
-        }
-
-        protected void onPostExecute(Bitmap result) {
-            bitmapMain = result;
-            if (onPhotoLoad != null)
-                onPhotoLoad.onLoad();
-        }
-    }
-
-    public interface OnPhotoLoad {
-        void onLoad();
-    }
 }
