@@ -2,8 +2,8 @@ package com.example.vkcupalbums.Fragments;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.opengl.Visibility;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
@@ -21,18 +21,15 @@ import android.widget.Toast;
 import com.example.vkcupalbums.AlbumInfo;
 import com.example.vkcupalbums.MainActivity;
 import com.example.vkcupalbums.R;
+import com.example.vkcupalbums.ViewAdapter.OnRecyclerListener;
 import com.example.vkcupalbums.ViewAdapter.RecyclerAdapter;
 import com.vk.sdk.VKAccessToken;
-import com.vk.sdk.api.VKApi;
 import com.vk.sdk.api.VKApiConst;
 import com.vk.sdk.api.VKError;
 import com.vk.sdk.api.VKParameters;
 import com.vk.sdk.api.VKRequest;
 import com.vk.sdk.api.VKResponse;
-import com.vk.sdk.api.model.VKApiPhoto;
 import com.vk.sdk.api.model.VKApiPhotoAlbum;
-import com.vk.sdk.api.model.VKApiUserFull;
-import com.vk.sdk.api.model.VKList;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -54,6 +51,8 @@ public class FragmentAlbums extends Fragment {
 
     private TextView textViewDocs;
     private TextView textViewEdit;
+
+    private final Handler handler = new Handler();
 
     @Override public View onCreateView(@NonNull LayoutInflater inflater, final ViewGroup container, Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -77,8 +76,8 @@ public class FragmentAlbums extends Fragment {
         buttonEdit.setOnClickListener((v) -> setEdit());
         buttonStopEdit.setOnClickListener((v) -> setEdit());
 
-        recyclerAdapter.setOnRecyclerClick(new RecyclerAdapter.OnRecyclerClick() {
-            @Override public void onRemoveIds(int[] ids) {
+        recyclerAdapter.setOnRecyclerListener(new OnRecyclerListener() {
+            @Override public void onRemove(int[] ids) {
                 new ThreadRemove(ids).start();
             }
 
@@ -94,7 +93,7 @@ public class FragmentAlbums extends Fragment {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(view.getContext());
         final EditText editTextName = new EditText(view.getContext());
-        builder.setTitle("Введите имя новой группы");
+        builder.setTitle("Введите имя нового альбома");
         builder.setPositiveButton("Создать группу", (dialogInterface, i) -> {
             String name = editTextName.getText().toString();
             if (name.isEmpty()) name = "Новый альбом";
@@ -171,7 +170,7 @@ public class FragmentAlbums extends Fragment {
                     JSONObject jsonObject1 = ((JSONObject) jsonObject.get("response"));
                     VKApiPhotoAlbum vkApiPhotoAlbum = new VKApiPhotoAlbum();
                     final VKApiPhotoAlbum vkApiPhotoAlbum1 = vkApiPhotoAlbum.parse(jsonObject1);
-                    getActivity().runOnUiThread(() -> recyclerAdapter.addAlbumInfo(new AlbumInfo(vkApiPhotoAlbum1.title, vkApiPhotoAlbum1.id, null, 0)));
+                    handler.post(() -> recyclerAdapter.addAlbumInfo(new AlbumInfo(vkApiPhotoAlbum1.title, vkApiPhotoAlbum1.id, null, 0)));
                 } catch (JSONException ex) {
                     Log.e("mesUri", "json error : " + ex.getMessage());
                 }
@@ -257,7 +256,7 @@ public class FragmentAlbums extends Fragment {
 
                 if (pos == 2 || i + 1 == vkApiPhotoAlbums.length) {
                     final AlbumInfo[] albumInfos1 = albumInfos;
-                    getActivity().runOnUiThread(() -> recyclerAdapter.addAlbumInfo(albumInfos1));
+                    handler.post(() -> recyclerAdapter.addAlbumInfo(albumInfos1));
                     albumInfos = new AlbumInfo[2];
                     pos = 0;
                 }

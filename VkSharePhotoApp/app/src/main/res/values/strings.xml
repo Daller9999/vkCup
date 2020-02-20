@@ -7,4 +7,6 @@
     <string name="share_photo_selected_main">Поделиться на стене</string>
     <string name="share_photo_selected_input_text">Добавить комментарий</string>
     <string name="share_photo_selected_send_text">Отправить</string>
+
+    <integer name="com_vk_sdk_AppId">7328948</integer>
 </resources>

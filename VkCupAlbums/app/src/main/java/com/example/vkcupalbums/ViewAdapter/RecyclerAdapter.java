@@ -23,7 +23,7 @@ import java.util.Vector;
 public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHolder> {
     private volatile List<AlbumInfo[]> list;
     private LayoutInflater layoutInflater;
-    private OnRecyclerClick onRecyclerClick;
+    private OnRecyclerListener onRecyclerListener;
 
     private volatile boolean edit = false;
 
@@ -66,8 +66,8 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
                 int[] mas = new int[removeIds.size()];
                 for (int i = 0; i < removeIds.size(); i++)
                     mas[i] = removeIds.elementAt(i);
-                if (onRecyclerClick != null)
-                    onRecyclerClick.onRemoveIds(mas);
+                if (onRecyclerListener != null)
+                    onRecyclerListener.onRemove(mas);
             }
             setList(albumInfoAll);
         } else
@@ -76,8 +76,8 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
 
     private Animation shakeAnimation;
 
-    public void setOnRecyclerClick(OnRecyclerClick onRecyclerClick) {
-        this.onRecyclerClick = onRecyclerClick;
+    public void setOnRecyclerListener(OnRecyclerListener onRecyclerListener) {
+        this.onRecyclerListener = onRecyclerListener;
     }
 
     /*public void onRemoveIds(int[] ids) {
@@ -249,21 +249,21 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
                     checkAnimation();
                     viewsDelete[element].setVisibility(View.VISIBLE);
                 }
-            } else if (onRecyclerClick != null) {
+            } else if (onRecyclerListener != null) {
                 int element = -1;
                 if (view.getId() == R.id.image1)
                     element = 0;
                 else if (view.getId() == R.id.image2)
                     element = 1;
                 if (element != -1)
-                    onRecyclerClick.onItemClick(list.get(pos)[element].getId());
+                    onRecyclerListener.onItemClick(list.get(pos)[element].getId());
             }
 
         }
 
         @Override public boolean onLongClick(View view) {
-            if (onRecyclerClick != null)
-                onRecyclerClick.onLongClick();
+            if (onRecyclerListener != null)
+                onRecyclerListener.onLongClick();
             return false;
         }
 
@@ -284,13 +284,6 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
                 }
             }
         }
-    }
-
-
-    public interface OnRecyclerClick {
-        void onItemClick(int id);
-        void onLongClick();
-        void onRemoveIds(int[] ids);
     }
 
     /*private void openGroupInfo(GroupInfo groupInfo) {

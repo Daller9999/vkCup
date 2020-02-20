@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -18,10 +19,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.vkcupalbums.MainActivity;
 import com.example.vkcupalbums.PhotoInfo;
 import com.example.vkcupalbums.R;
+import com.example.vkcupalbums.ViewAdapter.OnRecyclerListener;
 import com.example.vkcupalbums.ViewAdapter.RecyclerAdapterPhotos;
 import com.vk.sdk.VKAccessToken;
 import com.vk.sdk.api.VKApi;
@@ -34,30 +38,18 @@ import com.vk.sdk.api.model.VKApiPhoto;
 import com.vk.sdk.api.photo.VKImageParameters;
 import com.vk.sdk.api.photo.VKUploadImage;
 
-import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 // https://stackoverflow.com/questions/2017414/post-multipart-request-with-android-sdk
 
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.MediaType;
-import okhttp3.MultipartBody;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-
 import static android.app.Activity.RESULT_OK;
+import static java.lang.Thread.sleep;
 
 public class FragmentPhotoAlbum extends Fragment {
 
@@ -65,8 +57,14 @@ public class FragmentPhotoAlbum extends Fragment {
     private int userId;
     private RecyclerAdapterPhotos recyclerAdapterPhotos;
     private boolean edit = false;
-    private String httpLoadServer;
     private ExecutorService executorService = Executors.newCachedThreadPool();
+
+    private Button buttonBack;
+    private Button buttonAddPhoto;
+    private Button buttonStopEdit;
+    private TextView textViewEdit;
+
+    private final Handler handler = new Handler();
 
     @Nullable
     @Override
@@ -82,9 +80,11 @@ public class FragmentPhotoAlbum extends Fragment {
         RecyclerView recyclerView = view.findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerAdapterPhotos = new RecyclerAdapterPhotos(getContext());
-        recyclerAdapterPhotos.setOnRecyclerClick(new RecyclerAdapterPhotos.OnRecyclerClick() {
-            @Override public void onItemClick(int id) {
+        recyclerAdapterPhotos.setOnRecyclerListener(new OnRecyclerListener() {
+            @Override public void onItemClick(int id) {}
 
+            @Override public void onRemove(int[] ids) {
+                executorService.execute(new ThreadRemove(ids));
             }
 
             @Override public void onLongClick() {
@@ -93,12 +93,22 @@ public class FragmentPhotoAlbum extends Fragment {
         });
         recyclerView.setAdapter(recyclerAdapterPhotos);
 
-        Button buttonAddPhoto = view.findViewById(R.id.buttonAddPhoto);
+        buttonAddPhoto = view.findViewById(R.id.buttonAddPhoto);
         buttonAddPhoto.setOnClickListener((v) -> {
             Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
             photoPickerIntent.setType("image/*");
             startActivityForResult(photoPickerIntent, 111);
         });
+
+        buttonBack = view.findViewById(R.id.buttonBack);
+        buttonBack.setOnClickListener((v) -> {
+            if (getActivity() != null)
+                ((MainActivity) getActivity()).loadFragmentAlbums();
+        });
+
+        textViewEdit = view.findViewById(R.id.secondTextDocs);
+        buttonStopEdit = view.findViewById(R.id.buttonStopEdit);
+        buttonStopEdit.setOnClickListener((v) -> setEdit());
 
         return view;
     }
@@ -121,9 +131,9 @@ public class FragmentPhotoAlbum extends Fragment {
             @Override public void onComplete(VKResponse response) {
                 super.onComplete(response); // response => VkApiPhoto
                 try {
-                    JSONObject jsonObject = ((JSONObject) response.json.get("response"));
+                    JSONArray jsonArray = ((JSONArray) response.json.get("response"));
                     VKApiPhoto vkApiPhoto = new VKApiPhoto();
-                    vkApiPhoto = vkApiPhoto.parse(jsonObject);
+                    vkApiPhoto = vkApiPhoto.parse((JSONObject) jsonArray.get(0));
                     executorService.execute(new ThreadLoadPhoto(vkApiPhoto));
                 } catch (JSONException ex) {
                     //
@@ -133,6 +143,7 @@ public class FragmentPhotoAlbum extends Fragment {
 
             @Override public void onError(VKError error) {
                 super.onError(error);
+                Toast.makeText(getContext(), "Не удалось загрузить фото", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -151,6 +162,12 @@ public class FragmentPhotoAlbum extends Fragment {
     private void setEdit() {
         edit = !edit;
         recyclerAdapterPhotos.setEdit(edit);
+        int visibility1 = edit ? View.VISIBLE : View.GONE;
+        int visibility2 = edit ? View.GONE : View.VISIBLE;
+        buttonStopEdit.setVisibility(visibility1);
+        textViewEdit.setVisibility(visibility1);
+        buttonAddPhoto.setVisibility(visibility2);
+        buttonBack.setVisibility(visibility2);
     }
 
     public void setAlbumId(int albumId) {
@@ -182,7 +199,7 @@ public class FragmentPhotoAlbum extends Fragment {
         });
     }
 
-    private class ThreadRemove extends Thread {
+    private class ThreadRemove implements Runnable {
 
         private int[] ids;
         private boolean wait = true;
@@ -245,7 +262,7 @@ public class FragmentPhotoAlbum extends Fragment {
 
                 if (pos == 3 || i + 1 == vkApiPhotos.length) {
                     final PhotoInfo[] photoInfos1 = photoInfos;
-                    getActivity().runOnUiThread(() -> recyclerAdapterPhotos.addPhotoInfo(photoInfos1));
+                    handler.post(() -> recyclerAdapterPhotos.addPhotoInfo(photoInfos1));
                     photoInfos = new PhotoInfo[3];
                     pos = 0;
                 }
@@ -264,7 +281,7 @@ public class FragmentPhotoAlbum extends Fragment {
         @Override public void run() {
             Bitmap bitmap = loadPhoto(vkApiPhoto);
             PhotoInfo photoInfo = new PhotoInfo(bitmap, vkApiPhoto.id);
-            getActivity().runOnUiThread(() -> recyclerAdapterPhotos.addPhotoInfo(photoInfo));
+            handler.post(() -> recyclerAdapterPhotos.addPhotoInfo(photoInfo));
         }
     }
 

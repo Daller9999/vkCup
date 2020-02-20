@@ -2,7 +2,6 @@ package com.example.vkcupalbums.ViewAdapter;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
-import android.support.constraint.ConstraintLayout;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -12,9 +11,7 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.TextView;
 
-import com.example.vkcupalbums.AlbumInfo;
 import com.example.vkcupalbums.PhotoInfo;
 import com.example.vkcupalbums.R;
 
@@ -25,7 +22,7 @@ import java.util.Vector;
 public class RecyclerAdapterPhotos extends RecyclerView.Adapter<RecyclerAdapterPhotos.ViewHolder> {
     private volatile List<PhotoInfo[]> list;
     private LayoutInflater layoutInflater;
-    private OnRecyclerClick onRecyclerClick;
+    private OnRecyclerListener onRecyclerListener;
 
     private volatile boolean edit = false;
 
@@ -35,20 +32,23 @@ public class RecyclerAdapterPhotos extends RecyclerView.Adapter<RecyclerAdapterP
         if (!edit) {
             List<PhotoInfo> albumInfoAll = new ArrayList<>();
             Vector<Integer> removeIds = new Vector<>();
-            for (PhotoInfo[] albumInfos : list) {
-                if (albumInfos[0] != null) {
-                    if (!albumInfos[0].isRemove())
-                        albumInfoAll.add(albumInfos[0]);
-                    else
-                        removeIds.addElement(albumInfos[0].getId());
+            for (PhotoInfo[] photoInfos : list) {
+                for (PhotoInfo photoInfo : photoInfos) {
+                    if (photoInfo != null) {
+                        if (!photoInfo.isRemove())
+                            albumInfoAll.add(photoInfo);
+                        else
+                            removeIds.addElement(photoInfo.getId());
+                    }
                 }
+            }
 
-                if (albumInfos[1] != null) {
-                    if (!albumInfos[1].isRemove())
-                        albumInfoAll.add(albumInfos[1]);
-                    else
-                        removeIds.addElement(albumInfos[1].getId());
-                }
+            if (!removeIds.isEmpty()) {
+                int[] mas = new int[removeIds.size()];
+                for (int i = 0; i < removeIds.size(); i++)
+                    mas[i] = removeIds.elementAt(i);
+                if (onRecyclerListener != null)
+                    onRecyclerListener.onRemove(mas);
             }
             setList(albumInfoAll);
         } else
@@ -57,8 +57,8 @@ public class RecyclerAdapterPhotos extends RecyclerView.Adapter<RecyclerAdapterP
 
     private Animation shakeAnimation;
 
-    public void setOnRecyclerClick(OnRecyclerClick onRecyclerClick) {
-        this.onRecyclerClick = onRecyclerClick;
+    public void setOnRecyclerListener(OnRecyclerListener onRecyclerListener) {
+        this.onRecyclerListener = onRecyclerListener;
     }
 
     public void addPhotoInfo(PhotoInfo photoInfo) {
@@ -212,19 +212,19 @@ public class RecyclerAdapterPhotos extends RecyclerView.Adapter<RecyclerAdapterP
                         viewsDelete[i].setVisibility(View.VISIBLE);
                         return;
                     }
-            } else if (onRecyclerClick != null) {
+            } /*else if (onRecyclerListener != null) {
                 for (int i = 0; i < imageViews.length; i++)
                     if (imageViews[i].getId() == view.getId()) {
-                        onRecyclerClick.onItemClick(list.get(pos)[i].getId());
+                        onRecyclerListener.onItemClick(list.get(pos)[i].getId());
                         return;
                     }
-            }
+            }*/
 
         }
 
         @Override public boolean onLongClick(View view) {
-            if (onRecyclerClick != null)
-                onRecyclerClick.onLongClick();
+            if (onRecyclerListener != null)
+                onRecyclerListener.onLongClick();
             return false;
         }
 
@@ -247,11 +247,6 @@ public class RecyclerAdapterPhotos extends RecyclerView.Adapter<RecyclerAdapterP
         }
     }
 
-
-    public interface OnRecyclerClick {
-        void onItemClick(int id);
-        void onLongClick();
-    }
 
     /*private void openGroupInfo(GroupInfo groupInfo) {
         constraintLayout.setVisibility(View.VISIBLE);
