@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -50,7 +51,15 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        String[] fingerprints = VKUtil.getCertificateFingerprint(this, this.getPackageName());
+        // String[] fingerprints = VKUtil.getCertificateFingerprint(this, this.getPackageName());
+
+        String[] permissions = {
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.INTERNET,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+        };
+        if (Build.VERSION.SDK_INT >= 23)
+            requestPermissions(permissions, 1);
 
         String[] otherPermissions = {VKScope.PHOTOS};
         if (!VKSdk.isLoggedIn())

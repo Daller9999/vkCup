@@ -61,6 +61,23 @@ public class RecyclerAdapterPhotos extends RecyclerView.Adapter<RecyclerAdapterP
         this.onRecyclerClick = onRecyclerClick;
     }
 
+    public void addPhotoInfo(PhotoInfo photoInfo) {
+        if (!list.isEmpty()) {
+            int pos = list.size() - 1;
+            PhotoInfo[] photoInfos = list.get(pos);
+            if (photoInfos[0] != null && photoInfos[1] == null) {
+                photoInfos[1] = photoInfo;
+                list.set(pos, photoInfos);
+            } else if (photoInfos[0] != null && photoInfos[2] == null) {
+                photoInfos[2] = photoInfo;
+                list.set(pos, photoInfos);
+            } else
+                list.add(new PhotoInfo[]{photoInfo, null, null});
+        } else
+            list.add(new PhotoInfo[]{photoInfo, null, null});
+        notifyDataSetChanged();
+    }
+
     /*public void onRemoveIds(int[] ids) {
         List<GroupInfo> newList = new ArrayList<>();
         Vector<Integer> idv = new Vector<>();
