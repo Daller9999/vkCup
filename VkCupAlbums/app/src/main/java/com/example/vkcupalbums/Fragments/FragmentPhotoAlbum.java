@@ -43,6 +43,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -248,23 +250,29 @@ public class FragmentPhotoAlbum extends Fragment {
 
         ThreadLoadData(VKApiPhoto[] vkApiPhotos) {
             this.vkApiPhotos = vkApiPhotos;
+            List<PhotoInfo> photoInfoList = new ArrayList<>();
+            for (VKApiPhoto vkApiPhoto : vkApiPhotos)
+                photoInfoList.add(new PhotoInfo(vkApiPhoto.id));
+            recyclerAdapterPhotos.setList(photoInfoList);
         }
 
         @Override public void run() {
-            PhotoInfo[] photoInfos = new PhotoInfo[3];
-            int pos = 0;
+            int pos = -1;
+            int rowNow = 0;
             for (int i = 0; i < vkApiPhotos.length; i++) {
                 VKApiPhoto vkApiPhoto = vkApiPhotos[i];
 
                 Bitmap bitmap = loadPhoto(vkApiPhoto);
-                photoInfos[pos] = new PhotoInfo(bitmap, vkApiPhoto.id);
                 pos++;
 
-                if (pos == 3 || i + 1 == vkApiPhotos.length) {
-                    final PhotoInfo[] photoInfos1 = photoInfos;
-                    handler.post(() -> recyclerAdapterPhotos.addPhotoInfo(photoInfos1));
-                    photoInfos = new PhotoInfo[3];
-                    pos = 0;
+                final int row = rowNow;
+                final int column = pos;
+
+                handler.post(() -> recyclerAdapterPhotos.setImageBitmap(row, column, bitmap));
+
+                if (pos == 2) {
+                    rowNow++;
+                    pos = -1;
                 }
             }
         }
@@ -280,7 +288,8 @@ public class FragmentPhotoAlbum extends Fragment {
 
         @Override public void run() {
             Bitmap bitmap = loadPhoto(vkApiPhoto);
-            PhotoInfo photoInfo = new PhotoInfo(bitmap, vkApiPhoto.id);
+            PhotoInfo photoInfo = new PhotoInfo(vkApiPhoto.id);
+            photoInfo.setBitmap(bitmap);
             handler.post(() -> recyclerAdapterPhotos.addPhotoInfo(photoInfo));
         }
     }

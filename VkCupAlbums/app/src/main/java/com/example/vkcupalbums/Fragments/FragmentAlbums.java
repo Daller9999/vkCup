@@ -29,6 +29,7 @@ import com.vk.sdk.api.VKError;
 import com.vk.sdk.api.VKParameters;
 import com.vk.sdk.api.VKRequest;
 import com.vk.sdk.api.VKResponse;
+import com.vk.sdk.api.model.VKApiPhoto;
 import com.vk.sdk.api.model.VKApiPhotoAlbum;
 
 import org.json.JSONArray;
@@ -36,6 +37,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FragmentAlbums extends Fragment {
 
@@ -170,7 +173,7 @@ public class FragmentAlbums extends Fragment {
                     JSONObject jsonObject1 = ((JSONObject) jsonObject.get("response"));
                     VKApiPhotoAlbum vkApiPhotoAlbum = new VKApiPhotoAlbum();
                     final VKApiPhotoAlbum vkApiPhotoAlbum1 = vkApiPhotoAlbum.parse(jsonObject1);
-                    handler.post(() -> recyclerAdapter.addAlbumInfo(new AlbumInfo(vkApiPhotoAlbum1.title, vkApiPhotoAlbum1.id, null, 0)));
+                    handler.post(() -> recyclerAdapter.addAlbumInfo(new AlbumInfo(vkApiPhotoAlbum1.title, vkApiPhotoAlbum1.id, 0)));
                 } catch (JSONException ex) {
                     Log.e("mesUri", "json error : " + ex.getMessage());
                 }
@@ -234,11 +237,15 @@ public class FragmentAlbums extends Fragment {
 
         ThreadLoadData(VKApiPhotoAlbum[] vkApiPhotoAlbums) {
             this.vkApiPhotoAlbums = vkApiPhotoAlbums;
+            List<AlbumInfo> albumInfoList = new ArrayList<>();
+            for (VKApiPhotoAlbum vkApiPhotoAlbum : vkApiPhotoAlbums)
+                albumInfoList.add(new AlbumInfo(vkApiPhotoAlbum.title, vkApiPhotoAlbum.id, vkApiPhotoAlbum.size));
+            recyclerAdapter.setList(albumInfoList);
         }
 
         @Override public void run() {
-            AlbumInfo[] albumInfos = new AlbumInfo[2];
-            int pos = 0;
+            int pos = -1;
+            int rowNow = 0;
             for (int i = 0; i < vkApiPhotoAlbums.length; i++) {
                 VKApiPhotoAlbum vkApiPhotoAlbum = vkApiPhotoAlbums[i];
                 String http = vkApiPhotoAlbum.thumb_src;
@@ -250,15 +257,16 @@ public class FragmentAlbums extends Fragment {
                 } catch (Exception e) {
                     Log.e("mesUri", "error to load image : " + e.getMessage());
                 }
-
-                albumInfos[pos] = new AlbumInfo(vkApiPhotoAlbum.title, vkApiPhotoAlbum.id, mIcon11, vkApiPhotoAlbum.size);
                 pos++;
 
-                if (pos == 2 || i + 1 == vkApiPhotoAlbums.length) {
-                    final AlbumInfo[] albumInfos1 = albumInfos;
-                    handler.post(() -> recyclerAdapter.addAlbumInfo(albumInfos1));
-                    albumInfos = new AlbumInfo[2];
-                    pos = 0;
+                final int row = rowNow;
+                final int column = pos;
+                final Bitmap bitmap = mIcon11;
+                handler.post(() -> recyclerAdapter.setImageBitmap(row, column, bitmap));
+
+                if (pos == 1) {
+                    rowNow++;
+                    pos = -1;
                 }
             }
         }

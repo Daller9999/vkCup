@@ -8,10 +8,11 @@ public class PhotoInfo {
     private Bitmap bitmap;
     private int id;
 
-    public PhotoInfo(Bitmap bitmap, int id) {
-        this.bitmap = bitmap;
+    public PhotoInfo(int id) {
         this.id = id;
     }
+
+    public void setBitmap(Bitmap bitmap) { this.bitmap = bitmap; }
 
     public Bitmap getBitmap() { return bitmap; }
 

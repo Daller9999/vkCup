@@ -1,6 +1,7 @@
 package com.example.vkcupalbums.ViewAdapter;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
@@ -61,6 +62,11 @@ public class RecyclerAdapterPhotos extends RecyclerView.Adapter<RecyclerAdapterP
         this.onRecyclerListener = onRecyclerListener;
     }
 
+    public void setImageBitmap(int row, int column, Bitmap bitmap) {
+        list.get(row)[column].setBitmap(bitmap);
+        notifyItemChanged(row);
+    }
+
     public void addPhotoInfo(PhotoInfo photoInfo) {
         if (!list.isEmpty()) {
             int pos = list.size() - 1;
@@ -102,12 +108,7 @@ public class RecyclerAdapterPhotos extends RecyclerView.Adapter<RecyclerAdapterP
         list = new ArrayList<>();
     }
 
-    private void updateData() {
-
-    }
-
-
-    private void setList(List<PhotoInfo> photoInfos) {
+    public void setList(List<PhotoInfo> photoInfos) {
         list = new ArrayList<>();
         for (int i = 0; i < photoInfos.size(); i += 3) {
             PhotoInfo[] groupInfosNew = new PhotoInfo[3];
@@ -137,8 +138,8 @@ public class RecyclerAdapterPhotos extends RecyclerView.Adapter<RecyclerAdapterP
             if (photoInfos[i] != null) {
                 if (!photoInfos[i].isRemove()) {
                     holder.viewsDelete[i].setVisibility(View.GONE);
-                    if (photoInfos[i].getBitmap() != null)
-                        holder.imageViews[i].setImageBitmap(photoInfos[i].getBitmap());
+                    // if (photoInfos[i].getBitmap() != null)
+                    holder.imageViews[i].setImageBitmap(photoInfos[i].getBitmap());
 
                     holder.checks[i].setVisibility(edit ? View.VISIBLE : View.GONE);
                     if (edit)

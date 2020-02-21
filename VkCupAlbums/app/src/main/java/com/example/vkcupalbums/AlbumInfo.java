@@ -15,12 +15,13 @@ public class AlbumInfo {
     private int id;
     private boolean isRemove = false;
 
-    public AlbumInfo(String description, int id, Bitmap bitmap, int count) {
-        bitmapMain = bitmap;
+    public AlbumInfo(String description, int id, int count) {
         this.id = id;
         this.description = description;
         this.photoCount = count;
     }
+
+    public void setBitmapMain(Bitmap bitmapMain) { this.bitmapMain = bitmapMain; }
 
     public void setRemove() {
         isRemove = true;

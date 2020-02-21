@@ -1,6 +1,7 @@
 package com.example.vkcupalbums.ViewAdapter;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
@@ -104,12 +105,17 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
         list = new ArrayList<>();
     }
 
+    public void setImageBitmap(int row, int column, Bitmap bitmap) {
+        list.get(row)[column].setBitmapMain(bitmap);
+        notifyItemChanged(row);
+    }
+
     private void updateData() {
 
     }
 
 
-    private void setList(List<AlbumInfo> groupInfos) {
+    public void setList(List<AlbumInfo> groupInfos) {
         list = new ArrayList<>();
         for (int i = 0; i < groupInfos.size(); i += 2) {
             AlbumInfo[] groupInfosNew = new AlbumInfo[2];
