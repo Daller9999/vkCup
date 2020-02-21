@@ -1,4 +1,4 @@
-package com.example.vkcupfiles;
+package com.example.vkcupfiles.FileHelper;
 
 public class FileData {
     private String path;

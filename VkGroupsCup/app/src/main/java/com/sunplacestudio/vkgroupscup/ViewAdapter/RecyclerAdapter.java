@@ -84,7 +84,7 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
         notifyItemInserted(list.size() - 1);
     }
 
-    private void setList(List<GroupInfo> groupInfos) {
+    public void setList(List<GroupInfo> groupInfos) {
         list = new ArrayList<>();
         for (int i = 0; i < groupInfos.size(); i += 3) {
             GroupInfo[] groupInfosNew = new GroupInfo[3];

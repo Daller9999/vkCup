@@ -138,7 +138,6 @@ public class RecyclerAdapterPhotos extends RecyclerView.Adapter<RecyclerAdapterP
             if (photoInfos[i] != null) {
                 if (!photoInfos[i].isRemove()) {
                     holder.viewsDelete[i].setVisibility(View.GONE);
-                    // if (photoInfos[i].getBitmap() != null)
                     holder.imageViews[i].setImageBitmap(photoInfos[i].getBitmap());
 
                     holder.checks[i].setVisibility(edit ? View.VISIBLE : View.GONE);

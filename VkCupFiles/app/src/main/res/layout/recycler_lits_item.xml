@@ -1,17 +1,72 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
-    <TextView
-        app:layout_constraintTop_toTopOf="parent"
+    android:layout_height="84dp">
 
-        android:gravity="center|left"
-        android:id="@+id/textViewMain"
-        android:textColor="@color/colorPrimary"
-        android:textSize="15sp"
-        android:layout_width="match_parent"
-        android:layout_height="40dp" />
+    <android.support.v7.widget.CardView
+        android:id="@+id/imageCardView"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="12dp"
+
+        app:cardCornerRadius="5dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent" >
+        <ImageView
+            android:id="@+id/imageSrc"
+            android:scaleType="centerCrop"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+    </android.support.v7.widget.CardView>
+
+    <TextView
+        android:id="@+id/textViewFileName"
+        android:layout_width="0dp"
+        android:layout_height="20dp"
+
+        android:layout_marginEnd="18dp"
+        android:textColor="@color/vk_black"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_marginStart="12dp"
+        app:layout_constraintLeft_toRightOf="@id/imageCardView"
+        app:layout_constraintRight_toLeftOf="@id/buttonMore"
+        app:layout_constraintTop_toTopOf="@id/imageCardView" />
+
+    <TextView
+        android:id="@+id/textViewDataSize"
+        android:layout_width="0dp"
+        android:layout_height="16dp"
+
+        android:layout_marginEnd="18dp"
+        android:textSize="13sp"
+        app:layout_constraintLeft_toLeftOf="@id/textViewFileName"
+        app:layout_constraintRight_toLeftOf="@id/buttonMore"
+        app:layout_constraintTop_toBottomOf="@id/textViewFileName" />
+
+    <TextView
+        android:id="@+id/textViewDataAny"
+        android:layout_width="0dp"
+        android:layout_height="16dp"
+
+        android:layout_marginEnd="18dp"
+        android:textSize="13sp"
+        app:layout_constraintLeft_toLeftOf="@id/textViewFileName"
+        app:layout_constraintRight_toLeftOf="@id/buttonMore"
+        app:layout_constraintTop_toBottomOf="@id/textViewDataSize" />
+
+    <Button
+        android:id="@+id/buttonMore"
+        android:layout_width="8dp"
+        android:layout_height="16dp"
+
+        android:layout_marginEnd="18dp"
+        android:background="@mipmap/ic_more_vertical_16"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </android.support.constraint.ConstraintLayout>
