@@ -32,7 +32,9 @@ public class FragmentProductInfo extends Fragment {
     private Drawable drawableUnSelect;
     private int colorUn = Color.parseColor("#3F8AE0");
     private int colorSelect = Color.WHITE;
-    private boolean added = false;
+    private boolean added = true;
+    private final String add = "Добавить в избранное";
+    private final String noAdd = "Удалить из избранного";
 
 
     private ImageView imageView;
@@ -50,6 +52,7 @@ public class FragmentProductInfo extends Fragment {
             added = !added;
             buttonSelect.setTextColor(added ? colorSelect : colorUn);
             buttonSelect.setBackground(added ? drawableSelect : drawableUnSelect);
+            buttonSelect.setText(added ? add : noAdd);
         });
 
         TextView textViewName1 = view.findViewById(R.id.textViewProductName);

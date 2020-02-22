@@ -39,6 +39,7 @@ import org.json.JSONObject;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 
 public class FragmentAlbums extends Fragment {
 
@@ -55,6 +56,8 @@ public class FragmentAlbums extends Fragment {
     private TextView textViewDocs;
     private TextView textViewEdit;
 
+    private List<AlbumInfo> albumInfoList = new ArrayList<>();
+
     private final Handler handler = new Handler();
 
     @Override public View onCreateView(@NonNull LayoutInflater inflater, final ViewGroup container, Bundle savedInstanceState) {
@@ -68,7 +71,10 @@ public class FragmentAlbums extends Fragment {
 
         userId = Integer.valueOf(VKAccessToken.currentToken().userId);
 
-        loadUserAlbums();
+        if (albumInfoList.isEmpty())
+            loadUserAlbums();
+        else
+            recyclerAdapter.setList(albumInfoList);
 
         buttonEdit = view.findViewById(R.id.buttonEdit);
         buttonAddAlbum = view.findViewById(R.id.buttonAddAlbum);
@@ -121,7 +127,15 @@ public class FragmentAlbums extends Fragment {
         private boolean error = false;
 
         ThreadRemove(int[] ids) {
+            Vector<Integer> v = new Vector<>();
+            for (int i : ids)
+                v.addElement(i);
             this.ids = ids;
+            List<AlbumInfo> albumInfos = new ArrayList<>();
+            for (AlbumInfo albumInfo : albumInfoList)
+                if (!v.contains(albumInfo.getId()))
+                    albumInfos.add(albumInfo);
+            albumInfoList = new ArrayList<>(albumInfos);
         }
 
         @Override public void run() {
@@ -173,7 +187,9 @@ public class FragmentAlbums extends Fragment {
                     JSONObject jsonObject1 = ((JSONObject) jsonObject.get("response"));
                     VKApiPhotoAlbum vkApiPhotoAlbum = new VKApiPhotoAlbum();
                     final VKApiPhotoAlbum vkApiPhotoAlbum1 = vkApiPhotoAlbum.parse(jsonObject1);
-                    handler.post(() -> recyclerAdapter.addAlbumInfo(new AlbumInfo(vkApiPhotoAlbum1.title, vkApiPhotoAlbum1.id, 0)));
+                    AlbumInfo albumInfo = new AlbumInfo(vkApiPhotoAlbum1.title, vkApiPhotoAlbum1.id, 0, null);
+                    albumInfoList.add(albumInfo);
+                    handler.post(() -> recyclerAdapter.addAlbumInfo(albumInfo));
                 } catch (JSONException ex) {
                     Log.e("mesUri", "json error : " + ex.getMessage());
                 }
@@ -201,54 +217,35 @@ public class FragmentAlbums extends Fragment {
     }
 
     private void loadUserAlbums() {
-        VKRequest vkRequest = new VKRequest("photos.getAlbums", VKParameters.from(VKApiConst.OWNER_ID, userId, "need_system", 1, "need_covers", 1));
-        vkRequest.executeWithListener(new VKRequest.VKRequestListener() {
-            @Override
-            public void onComplete(VKResponse response) {
-                super.onComplete(response);
-                JSONObject jsonObject = response.json;
-                try {
-                    JSONObject jsonObject1 = ((JSONObject) jsonObject.get("response"));
-                    int count = jsonObject1.getInt("count");
-                    JSONArray data = jsonObject1.getJSONArray("items");
-
-                    VKApiPhotoAlbum vkApiPhotoAlbum;
-                    VKApiPhotoAlbum[] vkApiPhotoAlbums = new VKApiPhotoAlbum[count];
-                    for (int i = 0; i < count; i++) {
-                        vkApiPhotoAlbum = new VKApiPhotoAlbum();
-                        vkApiPhotoAlbums[i] = vkApiPhotoAlbum.parse((JSONObject) data.get(i));
-                    }
-                    new ThreadLoadData(vkApiPhotoAlbums).start();
-                } catch (JSONException ex) {
-                    Log.e("mesUri", "json error : " + ex.getMessage());
-                }
-            }
-
-            @Override
-            public void onError(VKError error) {
-                super.onError(error);
-            }
-        });
-        // VKApi.photos().
+        new ThreadLoadData().start();
     }
 
     private class ThreadLoadData extends Thread {
-        private VKApiPhotoAlbum[] vkApiPhotoAlbums;
+        private int offset = 0;
+        private int count = 50;
+        private boolean wait = true;
 
-        ThreadLoadData(VKApiPhotoAlbum[] vkApiPhotoAlbums) {
-            this.vkApiPhotoAlbums = vkApiPhotoAlbums;
-            List<AlbumInfo> albumInfoList = new ArrayList<>();
-            for (VKApiPhotoAlbum vkApiPhotoAlbum : vkApiPhotoAlbums)
-                albumInfoList.add(new AlbumInfo(vkApiPhotoAlbum.title, vkApiPhotoAlbum.id, vkApiPhotoAlbum.size));
-            recyclerAdapter.setList(albumInfoList);
-        }
+        ThreadLoadData() { }
 
         @Override public void run() {
+
+            while (count > 0) {
+                VKRequest vkRequest = new VKRequest("photos.getAlbums",
+                        VKParameters.from(VKApiConst.OWNER_ID, userId, "need_system", 1, "need_covers", 1, "offset", offset, "count", count));
+                vkRequest.executeWithListener(vkRequestListener);
+                try {
+                    while (wait)
+                        sleep(50);
+                } catch (InterruptedException ex) {
+                    //
+                }
+            }
+            handler.post(() -> recyclerAdapter.setList(albumInfoList));
+
             int pos = -1;
             int rowNow = 0;
-            for (int i = 0; i < vkApiPhotoAlbums.length; i++) {
-                VKApiPhotoAlbum vkApiPhotoAlbum = vkApiPhotoAlbums[i];
-                String http = vkApiPhotoAlbum.thumb_src;
+            for (int i = 0; i < albumInfoList.size(); i++) {
+                String http = albumInfoList.get(i).getHttp();
 
                 Bitmap mIcon11 = null;
                 try {
@@ -270,5 +267,37 @@ public class FragmentAlbums extends Fragment {
                 }
             }
         }
+
+        private VKRequest.VKRequestListener vkRequestListener = new VKRequest.VKRequestListener() {
+            @Override
+            public void onComplete(VKResponse response) {
+                super.onComplete(response);
+                JSONObject jsonObject = response.json;
+                try {
+                    JSONObject jsonObject1 = ((JSONObject) jsonObject.get("response"));
+                    count = jsonObject1.getInt("count");
+                    JSONArray data = jsonObject1.getJSONArray("items");
+
+                    VKApiPhotoAlbum vkApiPhotoAlbum;
+                    VKApiPhotoAlbum[] vkApiPhotoAlbums = new VKApiPhotoAlbum[count];
+                    for (int i = 0; i < count; i++) {
+                        vkApiPhotoAlbum = new VKApiPhotoAlbum();
+                        vkApiPhotoAlbums[i] = vkApiPhotoAlbum.parse((JSONObject) data.get(i));
+                    }
+                    for (VKApiPhotoAlbum vkApiPhotoAlbum1 : vkApiPhotoAlbums)
+                        albumInfoList.add(new AlbumInfo(vkApiPhotoAlbum1.title, vkApiPhotoAlbum1.id, vkApiPhotoAlbum1.size, vkApiPhotoAlbum1.thumb_src));
+
+                    offset += count;
+                    wait = false;
+                } catch (JSONException ex) {
+                    Log.e("mesUri", "json error : " + ex.getMessage());
+                }
+            }
+
+            @Override
+            public void onError(VKError error) {
+                super.onError(error);
+            }
+        };
     }
 }

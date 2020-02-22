@@ -79,7 +79,7 @@ public class FragmentShowData extends Fragment {
         Button buttonBack = view.findViewById(R.id.buttonBack);
         buttonBack.setOnClickListener((v) -> {
             if (getActivity() != null)
-                ((MainActivity) getActivity()).loadFragmentFilesList();
+                ((MainActivity) getActivity()).popBackStack();
         });
 
         TextView textView = view.findViewById(R.id.textViewFileName);

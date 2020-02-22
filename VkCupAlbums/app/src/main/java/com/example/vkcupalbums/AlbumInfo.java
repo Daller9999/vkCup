@@ -14,12 +14,16 @@ public class AlbumInfo {
     private int photoCount;
     private int id;
     private boolean isRemove = false;
+    private String http;
 
-    public AlbumInfo(String description, int id, int count) {
+    public AlbumInfo(String description, int id, int count, String http) {
         this.id = id;
         this.description = description;
         this.photoCount = count;
+        this.http = http;
     }
+
+    public String getHttp() { return http; }
 
     public void setBitmapMain(Bitmap bitmapMain) { this.bitmapMain = bitmapMain; }
 

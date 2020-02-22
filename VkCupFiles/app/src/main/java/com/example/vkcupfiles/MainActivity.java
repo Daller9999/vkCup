@@ -63,13 +63,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void loadFragmentFilesList() {
-        getSupportFragmentManager().beginTransaction().replace(R.id.container, new FragmentListFiles()).commit();
+        getSupportFragmentManager().beginTransaction().replace(R.id.container, new FragmentListFiles()).addToBackStack(FragmentListFiles.class.getName()).commit();
     }
 
     public void loadDataFile(VkDocsData vkDocsData) {
         FragmentShowData fragmentShowData = new FragmentShowData();
         fragmentShowData.setData(vkDocsData);
-        getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.fragment_in, R.anim.fragment_out).replace(R.id.container, fragmentShowData).commit();
+        getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.fragment_in, R.anim.fragment_out).replace(R.id.container, fragmentShowData)
+                .addToBackStack(FragmentShowData.class.getName()).commit();
+    }
+
+    public void popBackStack() {
+        getSupportFragmentManager().popBackStack();
     }
 
 

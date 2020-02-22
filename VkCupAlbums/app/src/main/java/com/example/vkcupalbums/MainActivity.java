@@ -95,13 +95,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void loadFragmentAlbums() {
-        getSupportFragmentManager().beginTransaction().replace(R.id.container, new FragmentAlbums()).commit();
+        getSupportFragmentManager().beginTransaction().replace(R.id.container, new FragmentAlbums()).addToBackStack(FragmentAlbums.class.getName()).commit();
     }
 
     public void loadFragmentPhoto(int id) {
         FragmentPhotoAlbum fragmentPhotoAlbum = new FragmentPhotoAlbum();
         fragmentPhotoAlbum.setAlbumId(id);
-        getSupportFragmentManager().beginTransaction().replace(R.id.container, fragmentPhotoAlbum).commit();
+        getSupportFragmentManager().beginTransaction().replace(R.id.container, fragmentPhotoAlbum).addToBackStack(FragmentPhotoAlbum.class.getName()).commit();
+    }
+
+    public void popBackStack() {
+        getSupportFragmentManager().popBackStack();
     }
 
 }

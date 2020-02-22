@@ -35,6 +35,7 @@ public class FragmentListFiles extends Fragment {
     private RecyclerAdapter recyclerAdapter;
     private int userId;
     private List<VkDocsData> vkDocsDataList = new ArrayList<>();
+    private List<JSONObject> jsonObjects = new ArrayList<>();
 
 
     @Override public View onCreateView(@NonNull LayoutInflater inflater, final ViewGroup container, Bundle savedInstanceState) {
@@ -58,7 +59,10 @@ public class FragmentListFiles extends Fragment {
             }
         });
 
-        loadFiles();
+        if (vkDocsDataList.isEmpty())
+            loadFiles();
+        else
+            recyclerAdapter.setList(vkDocsDataList, jsonObjects);
 
         return view;
     }
@@ -69,7 +73,7 @@ public class FragmentListFiles extends Fragment {
             @Override public void onComplete(VKResponse response) {
                 super.onComplete(response);
                 try {
-                    List<JSONObject> jsonObjects = new ArrayList<>();
+                    jsonObjects = new ArrayList<>();
                     JSONObject jsonObject = (JSONObject) response.json.get("response");
                     JSONArray jsonArray = jsonObject.getJSONArray("items");
                     for (int i = 0; i < jsonArray.length(); i++) {
