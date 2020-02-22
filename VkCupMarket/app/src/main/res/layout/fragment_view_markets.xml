@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/constraintListMarkets"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <TextView
+        app:layout_constraintTop_toTopOf="@id/buttonDropDown"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toLeftOf="@id/buttonDropDown"
+
+        android:id="@+id/textViewMarketCities"
+        android:textStyle="bold"
+        android:layout_marginStart="16sp"
+        android:textSize="20sp"
+        android:textColor="@color/vk_black"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content" />
+
+    <Button
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+
+        android:backgroundTint="@color/vk_color"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="30dp"
+        android:id="@+id/buttonDropDown"
+        android:background="@mipmap/ic_dropdown_16"
+        android:layout_width="24dp"
+        android:layout_height="24dp" />
+
+    <android.support.v7.widget.RecyclerView
+        app:layout_constraintTop_toBottomOf="@id/textViewMarketCities"
+        app:layout_constraintBottom_toBottomOf="parent"
+
+        android:id="@+id/recyclerViewMarketList"
+        android:layout_marginTop="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"/>
+
+</android.support.constraint.ConstraintLayout>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+    android:id="@+id/constraintListCities"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@drawable/background_selected_photo"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    
+    <Button
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+
+        android:id="@+id/buttonCloseCityList"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/ic_close_white_24dp"
+        android:backgroundTint="@color/vk_color"
+        android:layout_width="24dp"
+        android:layout_height="24dp" />
+
+    <TextView
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toRightOf="@id/buttonCloseCityList"
+
+        android:layout_marginTop="15dp"
+        android:layout_marginStart="24dp"
+        android:textSize="20sp"
+        android:textColor="@color/vk_black"
+        android:textStyle="bold"
+        android:text="@string/text_city"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <View
+        app:layout_constraintTop_toBottomOf="@id/buttonCloseCityList"
+
+        android:layout_marginTop="16dp"
+        android:background="@color/vk_grey_color"
+        android:id="@+id/viewLine"
+        android:layout_width="match_parent"
+        android:layout_height="2dp"/>
+
+    <android.support.v7.widget.RecyclerView
+        app:layout_constraintTop_toBottomOf="@id/viewLine"
+        app:layout_constraintBottom_toBottomOf="parent"
+
+        android:id="@+id/recyclerViewCitiesList"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"/>
+
+</android.support.constraint.ConstraintLayout>

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <Button
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+
+        android:layout_margin="14dp"
+        android:backgroundTint="@color/vk_color"
+        android:background="@mipmap/ic_back_outline_28"
+        android:id="@+id/buttonBack"
+        android:layout_width="28dp"
+        android:layout_height="28dp" />
+    
+    <TextView
+        app:layout_constraintTop_toTopOf="@id/buttonBack"
+        app:layout_constraintBottom_toBottomOf="@id/buttonBack"
+        app:layout_constraintLeft_toRightOf="@id/buttonBack"
+        app:layout_constraintRight_toRightOf="parent"
+
+        android:layout_marginStart="22dp"
+        android:layout_marginEnd="16dp"
+        android:id="@+id/textViewProductName"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/vk_black"
+        android:layout_width="0dp"
+        android:layout_height="24dp" />
+    
+    <ImageView
+        app:layout_constraintTop_toBottomOf="@id/buttonBack"
+
+        android:layout_marginTop="14dp"
+        android:id="@+id/imageView"
+        android:layout_width="match_parent"
+        android:layout_height="360dp" />
+    
+    <TextView
+        app:layout_constraintTop_toBottomOf="@id/imageView"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+
+        android:layout_margin="16dp"
+        android:textColor="@color/vk_black"
+        android:textSize="20sp"
+        android:id="@+id/textViewProductName2"
+        android:layout_width="0dp"
+        android:layout_height="24dp" />
+
+    <TextView
+        app:layout_constraintTop_toBottomOf="@id/textViewProductName2"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+
+        android:textStyle="bold"
+        android:layout_marginTop="4dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:textColor="@color/vk_black"
+        android:textSize="20sp"
+        android:id="@+id/textViewProductCost"
+        android:layout_width="0dp"
+        android:layout_height="24dp" />
+    
+    <TextView
+        app:layout_constraintTop_toBottomOf="@id/textViewProductCost"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="84dp"
+        android:layout_marginTop="12dp"
+        android:scrollbars="vertical"
+        android:id="@+id/textViewDescription"
+        android:layout_width="0dp"
+        android:layout_height="0dp" />
+    
+    <Button
+        app:layout_constraintTop_toBottomOf="@id/textViewDescription"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+
+        android:layout_marginTop="12dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:textSize="16sp"
+        android:textColor="@color/vk_white"
+        android:text="@string/text_add_product"
+        android:textAllCaps="false"
+        android:id="@+id/buttonAddProduct"
+        android:background="@drawable/button_select"
+        android:layout_width="0dp"
+        android:layout_height="44dp" />
+
+</android.support.constraint.ConstraintLayout>

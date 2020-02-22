@@ -1,4 +1,9 @@
 <resources>
     <string name="app_name">VkCupFiles</string>
     <integer name="com_vk_sdk_AppId">7329027</integer>
+
+    <string name="text_rename">Переименовать</string>
+    <string name="text_delte">Удалить документ</string>
+
+    <string name="text_docs">Документы</string>
 </resources>

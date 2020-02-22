@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">VkCupMarket</string>
+    <integer name="com_vk_sdk_AppId">7330931</integer>
+
+    <string name="text_city">Город</string>
+    <string name="text_add_product">Добавить в избранное</string>
+    <string name="text_delete_product">Удалить из избранного</string>
+</resources>

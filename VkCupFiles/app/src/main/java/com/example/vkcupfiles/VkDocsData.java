@@ -32,11 +32,9 @@ public class VkDocsData {
     private String typeSizeDate;
     private Bitmap bitmap = null;
 
-    private JSONObject jsonObject;
-
     private static final String[] months = {"Января", "Февраля", "Марта", "Апреля", "Мая", "Июня", "Июля", "Августа", "Сентября", "Октября", "Ноября", "Декабря"};
 
-    public VkDocsData(int id, int type, String title, int size, String ext, String url, int date, JSONObject jsonObject) {
+    public VkDocsData(int id, int type, String title, int size, String ext, String url, int date) {
         this.id = id;
         this.type = type;
         this.title = title;
@@ -44,10 +42,8 @@ public class VkDocsData {
         this.ext = ext;
         this.url = url;
 
-        this.jsonObject = jsonObject;
-
         DateFormat dateFormat = new SimpleDateFormat("dd:MM:yyyy", Locale.getDefault());
-        String dateText = dateFormat.format(new Date(date * 1000));
+        String dateText = dateFormat.format(new Date(date * 1000L));
         String[] split = dateText.split(":");
         String dateString = split[0] + " " + months[Integer.valueOf(split[1]) - 1] + " " + split[2];
 
@@ -55,8 +51,6 @@ public class VkDocsData {
     }
 
     public void setBitmap(Bitmap bitmap) { this.bitmap = bitmap; }
-
-    public JSONObject getJsonObject() { return jsonObject; }
 
     private String getSize(int sizeData) {
         int s = (int) (sizeData / (1024 * 1024));
