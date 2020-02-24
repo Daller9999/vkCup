@@ -177,28 +177,59 @@ public class FragmentPhotoAlbum extends Fragment {
     }
 
     private void loadPhotoAlbum() {
-        VKRequest vkRequest = new VKRequest("photos.get", VKParameters.from(VKApiConst.OWNER_ID, userId, VKApiConst.ALBUM_ID, albumId, VKApiConst.COUNT, 1000));
-        vkRequest.executeWithListener(new VKRequest.VKRequestListener() {
+        executorService.execute(new ThreadLoadPhotoData());
+    }
+
+    private class ThreadLoadPhotoData implements Runnable {
+
+        private int offset = 0;
+        private int count = 1000;
+        private boolean wait = false;
+        private List<VKApiPhoto> vkApiPhotos = new ArrayList<>();
+
+        @Override public void run() {
+            while (count > 0) {
+                VKRequest vkRequest = new VKRequest("photos.get",
+                        VKParameters.from(VKApiConst.OWNER_ID, userId, VKApiConst.ALBUM_ID, albumId, VKApiConst.COUNT, 1000, "offset", offset));
+                vkRequest.executeWithListener(vkRequestListener);
+                wait = true;
+                try {
+                    while (wait)
+                        sleep(50);
+                } catch (InterruptedException ex) {
+                    //
+                }
+            }
+            executorService.execute(new ThreadLoadData(vkApiPhotos));
+        }
+
+        private VKRequest.VKRequestListener vkRequestListener = new VKRequest.VKRequestListener() {
             @Override public void onComplete(VKResponse response) {
                 super.onComplete(response);
                 JSONObject jsonObject = response.json;
                 try {
                     JSONObject jsonObject1 = ((JSONObject) jsonObject.get("response"));
-                    int count = jsonObject1.getInt("count");
                     JSONArray data = jsonObject1.getJSONArray("items");
+                    count = data.length();
 
                     VKApiPhoto vkApiPhoto;
-                    VKApiPhoto[] vkApiPhotos = new VKApiPhoto[count];
                     for (int i = 0; i < count; i++) {
                         vkApiPhoto = new VKApiPhoto();
-                        vkApiPhotos[i] = vkApiPhoto.parse((JSONObject) data.get(i));
+                        vkApiPhotos.add(vkApiPhoto.parse((JSONObject) data.get(i)));
                     }
-                    executorService.execute(new ThreadLoadData(vkApiPhotos));
+                    offset += 1000;
                 } catch (JSONException ex) {
                     Log.e("mesUri", "json error : " + ex.getMessage());
                 }
+                wait = false;
             }
-        });
+
+            @Override
+            public void onError(VKError error) {
+                super.onError(error);
+                wait = false;
+            }
+        };
     }
 
     private class ThreadRemove implements Runnable {
@@ -246,21 +277,21 @@ public class FragmentPhotoAlbum extends Fragment {
     }
 
     private class ThreadLoadData implements Runnable {
-        private VKApiPhoto[] vkApiPhotos;
+        private List<VKApiPhoto> vkApiPhotos;
 
-        ThreadLoadData(VKApiPhoto[] vkApiPhotos) {
+        ThreadLoadData(List<VKApiPhoto> vkApiPhotos) {
             this.vkApiPhotos = vkApiPhotos;
             List<PhotoInfo> photoInfoList = new ArrayList<>();
             for (VKApiPhoto vkApiPhoto : vkApiPhotos)
                 photoInfoList.add(new PhotoInfo(vkApiPhoto.id));
-            recyclerAdapterPhotos.setList(photoInfoList);
+            handler.post(() -> recyclerAdapterPhotos.setList(photoInfoList));
         }
 
         @Override public void run() {
             int pos = -1;
             int rowNow = 0;
-            for (int i = 0; i < vkApiPhotos.length; i++) {
-                VKApiPhoto vkApiPhoto = vkApiPhotos[i];
+            for (int i = 0; i < vkApiPhotos.size(); i++) {
+                VKApiPhoto vkApiPhoto = vkApiPhotos.get(i);
 
                 Bitmap bitmap = loadPhoto(vkApiPhoto);
                 pos++;
@@ -315,5 +346,9 @@ public class FragmentPhotoAlbum extends Fragment {
         return mIcon11;
     }
 
+    @Override public void onDestroy() {
+        super.onDestroy();
+        executorService.shutdownNow();
+    }
 
 }

@@ -3,6 +3,7 @@ package com.sunplacestudio.vkgroupscup;
 import android.Manifest;
 import android.content.Intent;
 import android.os.CountDownTimer;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -37,7 +38,9 @@ import com.vk.sdk.api.model.VkAudioArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import static java.lang.Thread.sleep;
 
@@ -46,7 +49,7 @@ import static java.lang.Thread.sleep;
 public class MainActivity extends AppCompatActivity {
 
     private int userId = -1;
-    private GroupInfo[] groups;
+    private List<GroupInfo> groups = new ArrayList<>();
     private RecyclerView recyclerView;
     private ConstraintLayout constraintLayoutInfo;
     private RecyclerAdapter recyclerAdapter;
@@ -65,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
         if (!VKSdk.isLoggedIn())
             VKSdk.login(this, permissions);
         else
-            getUserGroups();
+            loadGroups();
 
         constraintLayoutInfo = findViewById(R.id.constrainLayout);
         constraintLayoutInfo.setVisibility(View.GONE);
@@ -117,19 +120,6 @@ public class MainActivity extends AppCompatActivity {
                     textViewText.setVisibility(View.VISIBLE);
                     textViewHelp.setVisibility(View.VISIBLE);
                 }
-            }
-        });
-    }
-
-    private void getUserGroups() {
-        VKApi.users().get().executeWithListener(new VKRequest.VKRequestListener() {
-            @Override
-            public void onComplete(VKResponse response) {
-                super.onComplete(response);
-                VKList<VKApiUserFull> vkApiUserFulls = (VKList<VKApiUserFull>) response.parsedModel;
-                VKApiUserFull vkApiUserFull = (VKApiUserFull) vkApiUserFulls.toArray()[0];
-                userId = vkApiUserFull.id;
-                loadGroups(userId);
             }
         });
     }
@@ -190,48 +180,20 @@ public class MainActivity extends AppCompatActivity {
         if (!VKSdk.onActivityResult(requestCode, resultCode, data, new VKCallback<VKAccessToken>() {
 
             @Override public void onResult(VKAccessToken res) {
-                getUserGroups();
-                // Пользователь успешно авторизовался
+                loadGroups();
             }
 
             @Override public void onError(VKError error) {
                 Toast.makeText(getApplicationContext(), "Ошибка при входе в ВК, попробуйте перезайти в приложение", Toast.LENGTH_SHORT).show();
-                // Произошла ошибка авторизации (например, пользователь запретил авторизацию)
             }
         })) {
             super.onActivityResult(requestCode, resultCode, data);
         }
     }
 
-    /**
-     * Загрузка групп пользователя
-     * @param userId ИД пользователя
-     */
-    private void loadGroups(int userId) {
-        VKApi.groups().
-                get(VKParameters.from(VKApiConst.USER_ID, userId, VKApiConst.EXTENDED, 1, VKApiConst.FIELDS, "description,members_count", VKApiConst.COUNT, 1000)).
-                executeWithListener(new VKRequest.VKRequestListener() {
-                    @Override
-                    public void onError(VKError error) {
-                        super.onError(error);
-                        Log.e("mesUri", "error group");
-                    }
-
-                    @Override public void onComplete(VKResponse response) {
-                        super.onComplete(response);
-                        VKApiCommunityArray vkApiCommunityFulls = (VKApiCommunityArray) response.parsedModel;
-
-                        Object[] mas = vkApiCommunityFulls.toArray();
-                        groups = new GroupInfo[mas.length];
-                        VKApiCommunityFull vkApiCommunityFull;
-                        for (int i = 0; i < mas.length; i++) {
-                            vkApiCommunityFull = (VKApiCommunityFull) mas[i];
-                            groups[i] = new GroupInfo(vkApiCommunityFull.id, vkApiCommunityFull.name, vkApiCommunityFull.photo_200, vkApiCommunityFull.description, vkApiCommunityFull.members_count);
-                        }
-                        groupInfos = new GroupInfo[3];
-                        loadWallData();
-                    }
-                });
+    private void loadGroups() {
+        userId = Integer.valueOf(VKAccessToken.currentToken().userId);
+        new ThreadLoad().start();
     }
 
     // грузим по 3 группы в recycler view, именно для этого нужен счётчик
@@ -239,102 +201,129 @@ public class MainActivity extends AppCompatActivity {
     private int groupCounter = 0;
     // Массив с основной информацией по всем группам
     private GroupInfo[] groupInfos;
+    private Handler handler = new Handler();
 
 
-    // Грузим информацию о дате последненго поста
-    private void loadWallData() {
-        VKApi.wall().
-                get(VKParameters.from(VKApiConst.OWNER_ID, -Math.abs(groups[groupCounter].getId()), VKApiConst.COUNT, 1, VKApiConst.EXTENDED, 1)).
-                executeWithListener(new VKRequest.VKRequestListener() {
-                    @Override public void onError(VKError error) {
-                        super.onError(error);
-                        Log.i("mesUri", "error to load : " + groupCounter + " ; " + error.toString());
-                        if (groupCounter < groups.length)
-                            sendNewDataWall();
-                        else {
-                            groupCounter = 0;
-                            Log.i("mesUri", "load over");
-                        }
-                    }
+    private class ThreadLoad extends Thread {
 
-                    @Override public void onComplete(VKResponse response) {
-                        super.onComplete(response);
-                        VKPostArray vkApiPosts = (VKPostArray) response.parsedModel;
-                        Object[] objects = vkApiPosts.toArray();
-                        if (objects.length != 0) {
-                            VKApiPost post = (VKApiPost) objects[0];
+        private boolean wait;
+        private int count = 3;
+        private int offset = 0;
+        private static final int timeOut = 250;
 
-                            groups[groupCounter].setLastPostDate(new Date(post.date * 1000));
-                            groupInfos[infoCounter] = groups[groupCounter];
-                            infoCounter++;
-                        }
+        private void waitForLoad() {
+            try {
+                while (wait)
+                    sleep(50);
+            } catch (InterruptedException ex) {
+                //
+            }
+        }
 
+        @Override public void run() {
+            VKRequest vkRequest;
+            try {
+                while (count > 0) {
+                    vkRequest = VKApi.groups().get(
+                            VKParameters.from(
+                                    VKApiConst.USER_ID, userId,
+                                    VKApiConst.EXTENDED, 1,
+                                    VKApiConst.FIELDS, "description,members_count",
+                                    VKApiConst.COUNT, 3,
+                                    "offset", offset));
+                    wait = true;
+                    vkRequest.executeWithListener(vkRequestListenerGetGroups);
+                    waitForLoad();
+
+                    sleep(timeOut);
+                    groupInfos = new GroupInfo[3];
+                    infoCounter = 0;
+                    if (count == 0) return;
+
+                    for (int i = 0; i < 3 && groupCounter < groups.size(); i++) {
+                        vkRequest = VKApi.wall().
+                                get(VKParameters.from(VKApiConst.OWNER_ID, -groups.get(groupCounter).getId(), VKApiConst.COUNT, 1, VKApiConst.EXTENDED, 1));
+                        wait = true;
+                        vkRequest.executeWithListener(vkRequestListenerWall);
+                        waitForLoad();
+                        sleep(timeOut);
+
+                        vkRequest = VKApi.groups().
+                                getMembers(VKParameters.from(VKApiConst.GROUP_ID, groups.get(groupCounter).getId(), VKApiConst.OFFSET, 0, "filter", "friends"));
+                        wait = true;
+                        vkRequest.executeWithListener(vkRequestListenerFriends);
+                        waitForLoad();
+                        sleep(timeOut);
+
+                        groupInfos[infoCounter] = groups.get(groupCounter);
+                        infoCounter++;
                         groupCounter++;
-                        if (groupCounter <= groups.length) {
-                            sendNewDataFriends();
-                        }
                     }
-                });
-    }
+                    handler.post(() -> recyclerAdapter.addData(groupInfos));
+                    offset += 3;
+                }
+            } catch (InterruptedException ex) {
+                //
+            }
+        }
 
-    // Тайм аут на отправку
-    private void sendNewDataWall() {
-        CountDownTimer countDownTimer = new CountDownTimer(waitForSend, 50) {
-            @Override public void onTick(long l) {}
-            @Override public void onFinish() {
-                loadWallData();
+        private VKRequest.VKRequestListener vkRequestListenerGetGroups = new VKRequest.VKRequestListener() {
+            @Override public void onComplete(VKResponse response) {
+                super.onComplete(response);
+                VKApiCommunityArray vkApiCommunityFulls = (VKApiCommunityArray) response.parsedModel;
+
+                Object[] mas = vkApiCommunityFulls.toArray();
+                count = mas.length;
+                VKApiCommunityFull vkApiCommunityFull;
+                for (int i = 0; i < mas.length; i++) {
+                    vkApiCommunityFull = (VKApiCommunityFull) mas[i];
+                    groups.add(new GroupInfo(vkApiCommunityFull.id, vkApiCommunityFull.name, vkApiCommunityFull.photo_200, vkApiCommunityFull.description, vkApiCommunityFull.members_count));
+                }
+                wait = false;
+            }
+
+            @Override
+            public void onError(VKError error) {
+                super.onError(error);
+                wait = false;
             }
         };
-        countDownTimer.start();
-    }
 
-    private void sendNewDataFriends() {
-        CountDownTimer countDownTimer = new CountDownTimer(waitForSend, 50) {
-            @Override public void onTick(long l) {}
-            @Override public void onFinish() {
-                loadFriend();
+        private VKRequest.VKRequestListener vkRequestListenerWall = new VKRequest.VKRequestListener() {
+            @Override public void onError(VKError error) {
+                super.onError(error);
+                wait = false;
+            }
+
+            @Override public void onComplete(VKResponse response) {
+                super.onComplete(response);
+                VKPostArray vkApiPosts = (VKPostArray) response.parsedModel;
+                Object[] objects = vkApiPosts.toArray();
+                if (objects.length != 0) {
+                    VKApiPost post = (VKApiPost) objects[0];
+                    groups.get(groupCounter).setLastPostDate(new Date(post.date * 1000L));
+                }
+                wait = false;
             }
         };
-        countDownTimer.start();
-    }
 
-    private void loadFriend() {
-        VKApi.groups().
-                getMembers(VKParameters.from(VKApiConst.GROUP_ID, groups[groupCounter - 1].getId(), VKApiConst.OFFSET, 1, "filter", "friends")).
-                executeWithListener(new VKRequest.VKRequestListener() {
-                    @Override
-                    public void onError(VKError error) {
-                        super.onError(error);
-                        if (groupCounter - 1 < groups.length)
-                            sendNewDataFriends();
-                        else {
-                            groupCounter = 0;
-                            Log.i("mesUri", "load over");
-                        }
-                    }
+        private VKRequest.VKRequestListener vkRequestListenerFriends = new VKRequest.VKRequestListener() {
+            @Override public void onError(VKError error) {
+                super.onError(error);
+                wait = false;
+            }
 
-                    @Override
-                    public void onComplete(VKResponse response) {
-                        super.onComplete(response);
-                        try {
-                            JSONObject ob = (JSONObject) response.json.get("response");
-                            int count = Integer.valueOf(ob.get("count").toString());
-                            groups[groupCounter - 1].setFriends(count);
-                            if (infoCounter == 3) {
-                                infoCounter = 0;
-                                recyclerAdapter.addData(groupInfos);
-                                groupInfos = new GroupInfo[3];
-                            }
-                        } catch (JSONException ex) {
-                            Log.e("mesUri","error to convert json");
-                        }
-                        if (groupCounter != groups.length)
-                            sendNewDataWall();
-                        else {
-                            // groupInfos[infoCounter] = groups[groupCounter - 1];
-                            recyclerAdapter.addData(groupInfos);
-                        }
-                    }
-                });
+            @Override public void onComplete(VKResponse response) {
+                super.onComplete(response);
+                try {
+                    JSONObject ob = (JSONObject) response.json.get("response");
+                    int count = Integer.valueOf(ob.get("count").toString());
+                    groups.get(groupCounter).setFriends(count);
+                } catch (JSONException ex) {
+                    Log.e("mesUri","error to convert json");
+                }
+                wait = false;
+            }
+        };
     }
 }

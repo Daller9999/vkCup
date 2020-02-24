@@ -46,7 +46,7 @@ class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHolder> {
     private EditText editTextRename;
     private int userId;
     private int currentPos = -1;
-    private volatile List<JSONObject> jsonObjects;
+    private volatile List<String> httpsPhotos;
     private List<Boolean> needLoad;
     private boolean isLoadRun = true;
     private Handler handler = new Handler();
@@ -55,17 +55,23 @@ class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHolder> {
         this.onRecyclerClick = onRecyclerClick;
     }
 
-    RecyclerAdapter(Context context, List<VkDocsData> list) {
-        layoutInflater = LayoutInflater.from(context);
-        this.list = list;
+    void addList(List<VkDocsData> vkDocsData) {
+        this.list.addAll(vkDocsData);
+        for (VkDocsData vkDocsData1 : vkDocsData) {
+            httpsPhotos.add(vkDocsData1.getHttpPhoto());
+            needLoad.add(vkDocsData1.getBitmap() == null);
+        }
+        loadImages();
+        notifyDataSetChanged();
     }
 
-    void setList(List<VkDocsData> vkDocsData, List<JSONObject> jsonObjects) {
-        this.list = vkDocsData;
-        this.jsonObjects = jsonObjects;
+    void setList(List<VkDocsData> vkDocsData) {
+        this.list = new ArrayList<>(vkDocsData);
         needLoad = new ArrayList<>();
-        for (VkDocsData vkDocsData1 : vkDocsData)
+        for (VkDocsData vkDocsData1 : vkDocsData) {
+            httpsPhotos.add(vkDocsData1.getHttpPhoto());
             needLoad.add(vkDocsData1.getBitmap() == null);
+        }
         loadImages();
         notifyDataSetChanged();
     }
@@ -73,6 +79,8 @@ class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHolder> {
     RecyclerAdapter(Context context) {
         layoutInflater = LayoutInflater.from(context);
         list = new ArrayList<>();
+        httpsPhotos = new ArrayList<>();
+        needLoad = new ArrayList<>();
 
         userId = Integer.valueOf(VKAccessToken.currentToken().userId);
 
@@ -240,7 +248,7 @@ class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHolder> {
                 super.onComplete(response);
                 if (currentPos != -1) {
                     list.remove(currentPos);
-                    jsonObjects.remove(currentPos);
+                    httpsPhotos.remove(currentPos);
                     notifyItemRemoved(currentPos);
                     currentPos = -1;
                 }
@@ -252,20 +260,16 @@ class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHolder> {
     private void loadImages() {
         new Thread(() -> {
             int count = 0;
-            for (int i = 0; i < jsonObjects.size() && isLoadRun; i++) {
+            for (int i = 0; i < httpsPhotos.size() && isLoadRun; i++) {
                 VkDocsData vkDocsData = list.get(i);
                 if (needLoad.get(i) && (vkDocsData.getType() == VkDocsData.IMAGE || vkDocsData.getType() == VkDocsData.GIF)) {
-                    JSONObject jsonObject = jsonObjects.get(i);
+                    String http = httpsPhotos.get(i);
                     try {
-                        String http = jsonObject.getString("photo_100");
                         Bitmap bitmap = loadPhoto(http);
                         final int pos = count;
                         while (list.size() < pos + 1)
                             sleep(50);
                         handler.post(() -> updateImage(bitmap, pos));
-                    } catch (JSONException ex) {
-                        ex.getCause();
-                        Log.e("mesUri", "json error : " + ex.getMessage());
                     } catch (InterruptedException ex) {
                         //
                     }
@@ -289,7 +293,7 @@ class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHolder> {
     public void destroy() {
         list.clear();
         onRecyclerClick = null;
-        jsonObjects.clear();
+        httpsPhotos.clear();
         isLoadRun = false;
     }
 

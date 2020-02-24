@@ -35,7 +35,6 @@ public class FragmentListFiles extends Fragment {
     private RecyclerAdapter recyclerAdapter;
     private int userId;
     private List<VkDocsData> vkDocsDataList = new ArrayList<>();
-    private List<JSONObject> jsonObjects = new ArrayList<>();
 
 
     @Override public View onCreateView(@NonNull LayoutInflater inflater, final ViewGroup container, Bundle savedInstanceState) {
@@ -62,20 +61,38 @@ public class FragmentListFiles extends Fragment {
         if (vkDocsDataList.isEmpty())
             loadFiles();
         else
-            recyclerAdapter.setList(vkDocsDataList, jsonObjects);
+            recyclerAdapter.setList(vkDocsDataList);
 
         return view;
     }
 
-    private void loadFiles() {
-        VKRequest vkRequest = new VKRequest("docs.get", VKParameters.from(VKApiConst.COUNT, 2000, VKApiConst.OWNER_ID, userId));
-        vkRequest.executeWithListener(new VKRequest.VKRequestListener() {
+    private class ThreadLoad extends Thread {
+        private int offest = 0;
+        private int count = 2000;
+        private boolean wait;
+
+        @Override public void run() {
+            while (count > 0) {
+                VKRequest vkRequest = new VKRequest("docs.get", VKParameters.from(VKApiConst.COUNT, 2000, VKApiConst.OWNER_ID, userId, "offset", offest));
+                vkRequest.executeWithListener(vkRequestListener);
+                wait = true;
+                try {
+                    while (wait)
+                        sleep(50);
+                } catch (InterruptedException ex) {
+                    //
+                }
+            }
+
+        }
+
+        private VKRequest.VKRequestListener vkRequestListener = new VKRequest.VKRequestListener() {
             @Override public void onComplete(VKResponse response) {
                 super.onComplete(response);
                 try {
-                    jsonObjects = new ArrayList<>();
                     JSONObject jsonObject = (JSONObject) response.json.get("response");
                     JSONArray jsonArray = jsonObject.getJSONArray("items");
+                    count = jsonArray.length();
                     for (int i = 0; i < jsonArray.length(); i++) {
                         JSONObject jsonObject1 = (JSONObject) jsonArray.get(i);
                         int id = jsonObject1.getInt("id");
@@ -85,11 +102,20 @@ public class FragmentListFiles extends Fragment {
                         String ext = jsonObject1.getString("ext");
                         String url = jsonObject1.getString("url");
                         int date = jsonObject1.getInt("date");
+                        String https = null;
+                        try {
+                            if (type == VkDocsData.IMAGE || type == VkDocsData.GIF)
+                                https = jsonObject1.getString("photo_100");
+                            int u = 4;
+                        } catch (JSONException ex) {
+                            //
+                        }
 
-                        vkDocsDataList.add(new VkDocsData(id, type, title, size, ext, url, date));
-                        jsonObjects.add(jsonObject1);
+                        vkDocsDataList.add(new VkDocsData(id, type, title, size, ext, url, https, date));
                     }
-                    recyclerAdapter.setList(vkDocsDataList, jsonObjects);
+                    recyclerAdapter.addList(vkDocsDataList);
+                    offest += 2000;
+                    wait = false;
                 } catch (JSONException ex) {
                     Toast.makeText(getContext(), "Не удалось загрузить файлы, проверьте соединение с интернетом", Toast.LENGTH_SHORT).show();
                 }
@@ -97,9 +123,14 @@ public class FragmentListFiles extends Fragment {
 
             @Override public void onError(VKError error) {
                 super.onError(error);
+                wait = false;
                 Toast.makeText(getContext(), "Не удалось загрузить файлы, проверьте соединение с интернетом", Toast.LENGTH_SHORT).show();
             }
-        });
+        };
+    }
+
+    private void loadFiles() {
+        new ThreadLoad().start();
     }
 
     @Override public void onDestroy() {

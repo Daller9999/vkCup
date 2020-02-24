@@ -28,19 +28,21 @@ public class VkDocsData {
     private String ext;
     private String  url;
     private String date;
+    private String httpPhoto;
 
     private String typeSizeDate;
     private Bitmap bitmap = null;
 
     private static final String[] months = {"Января", "Февраля", "Марта", "Апреля", "Мая", "Июня", "Июля", "Августа", "Сентября", "Октября", "Ноября", "Декабря"};
 
-    public VkDocsData(int id, int type, String title, int size, String ext, String url, int date) {
+    public VkDocsData(int id, int type, String title, int size, String ext, String url, String httpPhoto, int date) {
         this.id = id;
         this.type = type;
         this.title = title;
         this.size = size;
         this.ext = ext;
         this.url = url;
+        this.httpPhoto = httpPhoto;
 
         DateFormat dateFormat = new SimpleDateFormat("dd:MM:yyyy", Locale.getDefault());
         String dateText = dateFormat.format(new Date(date * 1000L));
@@ -49,6 +51,8 @@ public class VkDocsData {
 
         typeSizeDate = ext + " · " +  getSize(size) + " · " + dateString;
     }
+
+    public String getHttpPhoto() { return httpPhoto; }
 
     public void setBitmap(Bitmap bitmap) { this.bitmap = bitmap; }
 
