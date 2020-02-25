@@ -10,8 +10,8 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.SurfaceView;
 import android.view.TextureView;
+import android.widget.Button;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,11 +23,16 @@ public class MainActivity extends AppCompatActivity {
 
     public static final String LOG_TAG = "mesUri";
     private CameraManager mCameraManager = null;
-    private List<String> cameraIdsFront = new ArrayList<>();
-    private List<String> cameraIdsBack = new ArrayList<>();
-    private List<CameraService> cameraServices = new ArrayList<>();
+    private List<CameraService> cameraIdsFront = new ArrayList<>();
+    private List<CameraService> cameraIdsBack = new ArrayList<>();
 
-    private TextureView texttureView;
+    private AutoFitTextureView autoFitTextureView;
+    private boolean front = false;
+    private boolean isMakeVideo = false;
+    private int width;
+    private int height;
+
+    private CameraService cameraServiceCurrent = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,61 +53,31 @@ public class MainActivity extends AppCompatActivity {
                     requestPermissions(new String[]{permissoin}, 1);
         }
 
-        texttureView = findViewById(R.id.imageView);
-        texttureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
+        autoFitTextureView = findViewById(R.id.imageView);
+        autoFitTextureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
             @Override public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int i, int i1) {
-                for (CameraService cameraService : cameraServices)
-                    if (cameraService.getType() == BACK) {
-                        cameraService.openCamera(MainActivity.this, i, i1);
-                        break;
-                    }
+                width = i;
+                height = i1;
+                cameraServiceCurrent = cameraIdsBack.get(0);
+                cameraServiceCurrent.openCamera(MainActivity.this, width, height);
             }
-
-            @Override public void onSurfaceTextureSizeChanged(SurfaceTexture surfaceTexture, int i, int i1) {
-
-            }
-
-            @Override public boolean onSurfaceTextureDestroyed(SurfaceTexture surfaceTexture) {
-                return false;
-            }
-
-            @Override public void onSurfaceTextureUpdated(SurfaceTexture surfaceTexture) {
-
-            }
+            @Override public void onSurfaceTextureSizeChanged(SurfaceTexture surfaceTexture, int i, int i1) {}
+            @Override public boolean onSurfaceTextureDestroyed(SurfaceTexture surfaceTexture) { return false; }
+            @Override public void onSurfaceTextureUpdated(SurfaceTexture surfaceTexture) {}
         });
 
         CameraManager cameraManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
         try {
-
             // выводим информацию по камере
             for (String cameraID : cameraManager.getCameraIdList()) {
 
                 CameraCharacteristics cc = cameraManager.getCameraCharacteristics(cameraID);
                 int typeFacing = cc.get(CameraCharacteristics.LENS_FACING);
 
-                int type = 0;
-                if (typeFacing ==  CameraCharacteristics.LENS_FACING_FRONT) {
-                    cameraIdsFront.add(cameraID);
-                    type = FRONT;
-                }
-
-                if (typeFacing ==  CameraCharacteristics.LENS_FACING_BACK) {
-                    cameraIdsBack.add(cameraID);
-                    type = BACK;
-                }
-
-                cameraServices.add(new CameraService(cameraID, texttureView, type, this));
-                /*
-                StreamConfigurationMap configurationMap = cc.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-                Size[] sizesJPEG = configurationMap.getOutputSizes(ImageFormat.JPEG);
-
-                if (sizesJPEG != null) {
-                    for (Size item:sizesJPEG) {
-                        Log.i(LOG_TAG, "w:"+item.getWidth()+" h:"+item.getHeight());
-                    }
-                }  else {
-                    Log.i(LOG_TAG, "camera don`t support JPEG");
-                }*/
+                if (typeFacing ==  CameraCharacteristics.LENS_FACING_FRONT)
+                    cameraIdsFront.add(new CameraService(cameraID, autoFitTextureView, FRONT, this));
+                else if (typeFacing ==  CameraCharacteristics.LENS_FACING_BACK)
+                    cameraIdsBack.add(new CameraService(cameraID, autoFitTextureView, BACK, this));
             }
         } catch(CameraAccessException e){
             Log.e(LOG_TAG, e.getMessage());
@@ -110,6 +85,33 @@ public class MainActivity extends AppCompatActivity {
         } catch (NullPointerException ex) {
             //
         }
+
+        Button buttonSwitchCamera = findViewById(R.id.buttonSwichCamera);
+        buttonSwitchCamera.setOnClickListener((v) -> {
+            if (cameraIdsBack.isEmpty() || cameraIdsFront.isEmpty()) return;
+            front = !front;
+            if (!front) {
+                cameraIdsFront.get(0).closeCamera();
+                cameraIdsBack.get(0).openCamera(this, width, height);
+                cameraServiceCurrent = cameraIdsBack.get(0);
+            } else {
+                cameraIdsBack.get(0).closeCamera();
+                cameraIdsFront.get(0).openCamera(this, width, height);
+                cameraServiceCurrent = cameraIdsFront.get(0);
+            }
+        });
+
+        Button buttonVideo = findViewById(R.id.buttonVideo);
+        buttonVideo.setOnClickListener((v) -> {
+            if (cameraServiceCurrent != null) {
+                isMakeVideo = !isMakeVideo;
+                if (isMakeVideo)
+                    cameraServiceCurrent.startRecordingVideo();
+                else
+                    cameraServiceCurrent.startRecordingVideo();
+            }
+
+        });
     }
 
 }
