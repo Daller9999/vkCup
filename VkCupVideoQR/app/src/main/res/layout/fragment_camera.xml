@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <View
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/imageView"
+
+        android:background="@color/colorBlack"
+        android:id="@+id/viewUpBack"
+        android:layout_width="match_parent"
+        android:layout_height="0dp" />
+
+    <com.sunplacestudio.vkcupvideoqr.AutoFitTextureView
+        app:layout_constraintTop_toBottomOf="@id/viewUpBack"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/viewDownBack"
+
+        android:id="@+id/imageView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <View
+        app:layout_constraintTop_toBottomOf="@id/imageView"
+        app:layout_constraintBottom_toBottomOf="parent"
+
+        android:background="@color/colorBlack"
+        android:id="@+id/viewDownBack"
+        android:layout_width="match_parent"
+        android:layout_height="0dp" />
+
+    <Button
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+
+        android:layout_marginBottom="70dp"
+        android:layout_marginEnd="78dp"
+        android:id="@+id/buttonSwichCamera"
+        android:backgroundTint="@color/colorWhite"
+        android:background="@mipmap/ic_switch_camera_shadow_48"
+        android:layout_width="48dp"
+        android:layout_height="48dp" />
+    <Button
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+
+        android:layout_marginStart="70dp"
+        android:layout_marginBottom="70dp"
+        android:id="@+id/buttonFlash"
+        android:backgroundTint="@color/colorWhite"
+        android:background="@mipmap/ic_flash_shadow_48"
+        android:layout_width="48dp"
+        android:layout_height="48dp" />
+    <com.sunplacestudio.vkcupvideoqr.RoundButton
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+
+        android:layout_marginBottom="60dp"
+        android:id="@+id/buttonVideo"
+        android:layout_width="64dp"
+        android:layout_height="64dp" />
+</android.support.constraint.ConstraintLayout>

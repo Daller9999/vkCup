@@ -1,4 +1,4 @@
-#Mon Feb 24 16:49:10 MSK 2020
-base.0=/Users/daler9999/Desktop/projects/camera-samples/Camera2VideoJava/Application/build/intermediates/transforms/dexMerger/debug/9
+#Tue Feb 25 22:50:24 MSK 2020
+base.0=/Users/daler9999/Desktop/projects/vkCup/Camera2VideoJava/Application/build/intermediates/transforms/dexMerger/debug/9
 path.0=classes.dex
 renamed.0=classes.dex

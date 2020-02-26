@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "/Users/daler9999/Desktop/projects/camera-samples/Camera2VideoJava/Application/build/intermediates/incremental/mergeDebugResources/merged.dir/values/values.xml",
+            "outputFile": "/Users/daler9999/Desktop/projects/vkCup/Camera2VideoJava/Application/build/intermediates/incremental/mergeDebugResources/merged.dir/values/values.xml",
             "map": [
                 {
                     "source": "/Users/daler9999/.gradle/caches/transforms-1/files-1.1/cardview-v7-28.0.0.aar/07101953931ba40fedb7c2c481d56547/res/values/values.xml",
@@ -23,37 +23,20 @@
                     }
                 },
                 {
-                    "source": "/Users/daler9999/Desktop/projects/camera-samples/Camera2VideoJava/Application/src/main/res/values/template-dimens.xml",
+                    "source": "/Users/daler9999/Desktop/projects/vkCup/Camera2VideoJava/Application/src/main/res/values/styles.xml",
                     "from": {
-                        "startLines": "28,24,23,22,21,20,29",
-                        "startColumns": "4,4,4,4,4,4,4",
-                        "startOffsets": "959,880,836,791,748,706,1029",
-                        "endColumns": "69,42,43,44,42,41,67",
-                        "endOffsets": "1024,918,875,831,786,743,1092"
+                        "startLines": "17",
+                        "startColumns": "4",
+                        "startOffsets": "646",
+                        "endColumns": "95",
+                        "endOffsets": "737"
                     },
                     "to": {
-                        "startLines": "172,173,174,175,176,177,205",
-                        "startColumns": "4,4,4,4,4,4,4",
-                        "startOffsets": "11780,11850,11893,11937,11982,12025,13710",
-                        "endColumns": "69,42,43,44,42,41,67",
-                        "endOffsets": "11845,11888,11932,11977,12020,12062,13773"
-                    }
-                },
-                {
-                    "source": "/Users/daler9999/Desktop/projects/camera-samples/Camera2VideoJava/Application/src/main/res/values/strings.xml",
-                    "from": {
-                        "startLines": "6,4,5,2,3",
-                        "startColumns": "4,4,4,4,4",
-                        "startOffsets": "293,135,185,55,97",
-                        "endColumns": "82,49,107,41,37",
-                        "endOffsets": "371,180,288,92,130"
-                    },
-                    "to": {
-                        "startLines": "270,271,281,282,285",
-                        "startColumns": "4,4,4,4,4",
-                        "startOffsets": "17802,17885,18133,18241,18407",
-                        "endColumns": "82,49,107,41,37",
-                        "endOffsets": "17880,17930,18236,18278,18440"
+                        "startLines": "1367",
+                        "startColumns": "4",
+                        "startOffsets": "87597",
+                        "endColumns": "94",
+                        "endOffsets": "87687"
                     }
                 },
                 {
@@ -76,6 +59,23 @@
                     }
                 },
                 {
+                    "source": "/Users/daler9999/Desktop/projects/vkCup/Camera2VideoJava/Application/src/main/res/values/template-dimens.xml",
+                    "from": {
+                        "startLines": "28,24,23,22,21,20,29",
+                        "startColumns": "4,4,4,4,4,4,4",
+                        "startOffsets": "959,880,836,791,748,706,1029",
+                        "endColumns": "69,42,43,44,42,41,67",
+                        "endOffsets": "1024,918,875,831,786,743,1092"
+                    },
+                    "to": {
+                        "startLines": "172,173,174,175,176,177,205",
+                        "startColumns": "4,4,4,4,4,4,4",
+                        "startOffsets": "11780,11850,11893,11937,11982,12025,13710",
+                        "endColumns": "69,42,43,44,42,41,67",
+                        "endOffsets": "11845,11888,11932,11977,12020,12062,13773"
+                    }
+                },
+                {
                     "source": "/Users/daler9999/.gradle/caches/transforms-1/files-1.1/coordinatorlayout-28.0.0.aar/afd3033db540db1fb06971ab3bdd2e15/res/values/values.xml",
                     "from": {
                         "startLines": "2,102,3,13",
@@ -95,20 +95,39 @@
                     }
                 },
                 {
-                    "source": "/Users/daler9999/Desktop/projects/camera-samples/Camera2VideoJava/Application/src/main/res/values/styles.xml",
+                    "source": "/Users/daler9999/Desktop/projects/vkCup/Camera2VideoJava/Application/src/main/res/values/strings.xml",
                     "from": {
-                        "startLines": "17",
-                        "startColumns": "4",
-                        "startOffsets": "646",
-                        "endColumns": "95",
-                        "endOffsets": "737"
+                        "startLines": "6,4,5,2,3",
+                        "startColumns": "4,4,4,4,4",
+                        "startOffsets": "293,135,185,55,97",
+                        "endColumns": "82,49,107,41,37",
+                        "endOffsets": "371,180,288,92,130"
                     },
                     "to": {
-                        "startLines": "1367",
-                        "startColumns": "4",
-                        "startOffsets": "87597",
-                        "endColumns": "94",
-                        "endOffsets": "87687"
+                        "startLines": "270,271,281,282,285",
+                        "startColumns": "4,4,4,4,4",
+                        "startOffsets": "17802,17885,18133,18241,18407",
+                        "endColumns": "82,49,107,41,37",
+                        "endOffsets": "17880,17930,18236,18278,18440"
+                    }
+                },
+                {
+                    "source": "/Users/daler9999/Desktop/projects/vkCup/Camera2VideoJava/Application/src/main/res/values/base-strings.xml",
+                    "from": {
+                        "startLines": "18,19",
+                        "startColumns": "4,4",
+                        "startOffsets": "647,697",
+                        "endLines": "18,27",
+                        "endColumns": "49,13",
+                        "endOffsets": "692,890"
+                    },
+                    "to": {
+                        "startLines": "269,272",
+                        "startColumns": "4,4",
+                        "startOffsets": "17752,17935",
+                        "endLines": "269,280",
+                        "endColumns": "49,13",
+                        "endOffsets": "17797,18128"
                     }
                 },
                 {
@@ -131,7 +150,7 @@
                     }
                 },
                 {
-                    "source": "/Users/daler9999/Desktop/projects/camera-samples/Camera2VideoJava/Application/src/main/res/values/template-styles.xml",
+                    "source": "/Users/daler9999/Desktop/projects/vkCup/Camera2VideoJava/Application/src/main/res/values/template-styles.xml",
                     "from": {
                         "startLines": "24,20,22,27,29,34",
                         "startColumns": "4,4,4,4,4,4",
@@ -164,25 +183,6 @@
                         "startOffsets": "3726,13045,13098,13151,13204,107207,107383,107505,107767,107962",
                         "endColumns": "88,52,52,52,52,65,121,60,65,66",
                         "endOffsets": "3810,13093,13146,13199,13252,107268,107500,107561,107828,108024"
-                    }
-                },
-                {
-                    "source": "/Users/daler9999/Desktop/projects/camera-samples/Camera2VideoJava/Application/src/main/res/values/base-strings.xml",
-                    "from": {
-                        "startLines": "18,19",
-                        "startColumns": "4,4",
-                        "startOffsets": "647,697",
-                        "endLines": "18,27",
-                        "endColumns": "49,13",
-                        "endOffsets": "692,890"
-                    },
-                    "to": {
-                        "startLines": "269,272",
-                        "startColumns": "4,4",
-                        "startOffsets": "17752,17935",
-                        "endLines": "269,280",
-                        "endColumns": "49,13",
-                        "endOffsets": "17797,18128"
                     }
                 }
             ]

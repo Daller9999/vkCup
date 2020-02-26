@@ -3,16 +3,26 @@ package com.sunplacestudio.vkcupvideoqr;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.*;
+import android.hardware.camera2.params.StreamConfigurationMap;
 import android.os.Build;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.Size;
 import android.view.TextureView;
 import android.widget.Button;
+import android.widget.RadioButton;
+import android.widget.Toast;
 
+import com.sunplacestudio.vkcupvideoqr.Fragment.FragmentCamera;
+import com.sunplacestudio.vkcupvideoqr.Fragment.FragmentEdit;
+
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,17 +32,6 @@ import static com.sunplacestudio.vkcupvideoqr.CameraService.FRONT;
 public class MainActivity extends AppCompatActivity {
 
     public static final String LOG_TAG = "mesUri";
-    private CameraManager mCameraManager = null;
-    private List<CameraService> cameraIdsFront = new ArrayList<>();
-    private List<CameraService> cameraIdsBack = new ArrayList<>();
-
-    private AutoFitTextureView autoFitTextureView;
-    private boolean front = false;
-    private boolean isMakeVideo = false;
-    private int width;
-    private int height;
-
-    private CameraService cameraServiceCurrent = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,65 +52,18 @@ public class MainActivity extends AppCompatActivity {
                     requestPermissions(new String[]{permissoin}, 1);
         }
 
-        autoFitTextureView = findViewById(R.id.imageView);
-        autoFitTextureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
-            @Override public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int i, int i1) {
-                width = i;
-                height = i1;
-                cameraServiceCurrent = cameraIdsBack.get(0);
-                cameraServiceCurrent.openCamera(MainActivity.this, width, height);
-            }
-            @Override public void onSurfaceTextureSizeChanged(SurfaceTexture surfaceTexture, int i, int i1) {}
-            @Override public boolean onSurfaceTextureDestroyed(SurfaceTexture surfaceTexture) { return false; }
-            @Override public void onSurfaceTextureUpdated(SurfaceTexture surfaceTexture) {}
-        });
+        // showEditVideoFragment(null);
+        getSupportFragmentManager().beginTransaction().replace(R.id.container, new FragmentCamera()).addToBackStack(FragmentCamera.class.getName()).commit();
+    }
 
-        CameraManager cameraManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
-        try {
-            // выводим информацию по камере
-            for (String cameraID : cameraManager.getCameraIdList()) {
+    public void popBackStack() {
+        getSupportFragmentManager().popBackStack();
+    }
 
-                CameraCharacteristics cc = cameraManager.getCameraCharacteristics(cameraID);
-                int typeFacing = cc.get(CameraCharacteristics.LENS_FACING);
-
-                if (typeFacing ==  CameraCharacteristics.LENS_FACING_FRONT)
-                    cameraIdsFront.add(new CameraService(cameraID, autoFitTextureView, FRONT, this));
-                else if (typeFacing ==  CameraCharacteristics.LENS_FACING_BACK)
-                    cameraIdsBack.add(new CameraService(cameraID, autoFitTextureView, BACK, this));
-            }
-        } catch(CameraAccessException e){
-            Log.e(LOG_TAG, e.getMessage());
-            e.printStackTrace();
-        } catch (NullPointerException ex) {
-            //
-        }
-
-        Button buttonSwitchCamera = findViewById(R.id.buttonSwichCamera);
-        buttonSwitchCamera.setOnClickListener((v) -> {
-            if (cameraIdsBack.isEmpty() || cameraIdsFront.isEmpty()) return;
-            front = !front;
-            if (!front) {
-                cameraIdsFront.get(0).closeCamera();
-                cameraIdsBack.get(0).openCamera(this, width, height);
-                cameraServiceCurrent = cameraIdsBack.get(0);
-            } else {
-                cameraIdsBack.get(0).closeCamera();
-                cameraIdsFront.get(0).openCamera(this, width, height);
-                cameraServiceCurrent = cameraIdsFront.get(0);
-            }
-        });
-
-        Button buttonVideo = findViewById(R.id.buttonVideo);
-        buttonVideo.setOnClickListener((v) -> {
-            if (cameraServiceCurrent != null) {
-                isMakeVideo = !isMakeVideo;
-                if (isMakeVideo)
-                    cameraServiceCurrent.startRecordingVideo();
-                else
-                    cameraServiceCurrent.startRecordingVideo();
-            }
-
-        });
+    public void showEditVideoFragment(File file) {
+        FragmentEdit fragmentEdit = new FragmentEdit();
+        fragmentEdit.setFileEdit(file);
+        getSupportFragmentManager().beginTransaction().replace(R.id.container, fragmentEdit).addToBackStack(FragmentEdit.class.getName()).commit();
     }
 
 }

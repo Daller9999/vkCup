@@ -4,45 +4,36 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.content.res.Configuration;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
-import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
+import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Environment;
-import android.os.Handler;
 import android.support.annotation.NonNull;
-import android.util.DisplayMetrics;
 import android.util.Log;
-import android.util.Pair;
 import android.util.Size;
 import android.util.SparseIntArray;
 import android.view.Display;
 import android.view.Surface;
 import android.view.TextureView;
-import android.widget.LinearLayout;
-import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.sunplacestudio.vkcupvideoqr.MainActivity.LOG_TAG;
 
@@ -104,14 +95,22 @@ public class CameraService {
         }
     }
 
-    private static Size chooseVideoSize(Size[] choices) {
+    private static Size chooseVideoSize4and3(Size[] choices) {
         for (Size size : choices)
             if (size.getWidth() == size.getHeight() * 4 / 3 && size.getWidth() <= 1080)
                 return size;
         return choices[choices.length - 1];
     }
 
-    private static Size chooseOptimalSize(Size[] choices, int width, int height, Size aspectRatio) {
+    private static Size chooseVideoSizeFullScreen(Size[] choices) {
+        for (Size size : choices) {
+            if (size.getWidth() == 1920 && size.getHeight() == 1080)
+                return size;
+        }
+        return chooseVideoSize4and3(choices);
+    }
+
+    /*private static Size chooseOptimalSize(Size[] choices, int width, int height, Size aspectRatio) {
         List<Size> bigEnough = new ArrayList<>();
         int w = aspectRatio.getWidth();
         int h = aspectRatio.getHeight();
@@ -120,6 +119,28 @@ public class CameraService {
                 bigEnough.add(option);
         }
         return bigEnough.size() > 0 ? Collections.min(bigEnough, new CompareSizesByArea()) : choices[0];
+    }*/
+
+    private static Size chooseOptimalSize(Size[] choices, int width, int height, Size aspectRatio) {
+        // Collect the supported resolutions that are at least as big as the preview Surface
+        List<Size> bigEnough = new ArrayList<Size>();
+        int w = aspectRatio.getWidth();
+        int h = aspectRatio.getHeight();
+        double ratio = (double) h / w;
+        for (Size option : choices) {
+            double optionRatio = (double) option.getHeight() / option.getWidth();
+            if (ratio == optionRatio) {
+                bigEnough.add(option);
+            }
+        }
+
+        // Pick the smallest of those, assuming we found any
+        if (bigEnough.size() > 0) {
+            return Collections.min(bigEnough, new CompareSizesByArea());
+        } else {
+            Log.e(LOG_TAG, "Couldn't find any suitable preview size");
+            return choices[1];
+        }
     }
 
     static class CompareSizesByArea implements Comparator<Size> {
@@ -139,7 +160,7 @@ public class CameraService {
             CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(cameraId);
             StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
 
-            mVideoSize = chooseVideoSize(map.getOutputSizes(MediaRecorder.class));
+            mVideoSize = chooseVideoSizeFullScreen(map.getOutputSizes(MediaRecorder.class));
             mPreviewSize = chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class), width, height, mVideoSize);
 
             textureView.setAspectRatio(mPreviewSize.getHeight(), mPreviewSize.getWidth());
@@ -191,7 +212,7 @@ public class CameraService {
     private CameraDevice.StateCallback stateCallbackCamera = new CameraDevice.StateCallback() {
         @Override public void onOpened(@NonNull CameraDevice camera) {
             cameraDevice = camera;
-            createCameraPreviewSession();
+            startPreview();
         }
 
         @Override public void onDisconnected(@NonNull CameraDevice camera) {
@@ -212,31 +233,38 @@ public class CameraService {
         }
     }
 
-    private void createCameraPreviewSession() {
-
-        SurfaceTexture texture = textureView.getSurfaceTexture();
-        // texture.setDefaultBufferSize(1920,1080);
-        Surface surface = new Surface(texture);
-
+    private void startPreview() {
         try {
-            final CaptureRequest.Builder builder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-            builder.addTarget(surface);
-            cameraDevice.createCaptureSession(Arrays.asList(surface), new CameraCaptureSession.StateCallback() {
-                @Override public void onConfigured(CameraCaptureSession session) {
-                    mCaptureSession = session;
-                    try {
-                        mCaptureSession.setRepeatingRequest(builder.build(),null,null);
-                    } catch (CameraAccessException e) {
-                        e.printStackTrace();
-                    }
-                }
+            closePreviewSession();
+            SurfaceTexture texture = textureView.getSurfaceTexture();
+            texture.setDefaultBufferSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
+            mPreviewBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
 
-                @Override
-                public void onConfigureFailed(CameraCaptureSession session) { }}, null);
+            Surface previewSurface = new Surface(texture);
+            mPreviewBuilder.addTarget(previewSurface);
+
+            cameraDevice.createCaptureSession(Collections.singletonList(previewSurface),
+                    new CameraCaptureSession.StateCallback() {
+
+                        @Override
+                        public void onConfigured(@NonNull CameraCaptureSession session) {
+                            mCaptureSession = session;
+                            try {
+                                mCaptureSession.setRepeatingRequest(mPreviewBuilder.build(), null, null);
+                            } catch (CameraAccessException ex) {
+                                //
+                            }
+                        }
+
+                        @Override public void onConfigureFailed(@NonNull CameraCaptureSession session) {
+                            Log.e("mesUri", "failed to start camera");
+                        }
+                    }, null);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
     }
+
 
     private void transformImage(int width, int height)
     {
@@ -276,12 +304,12 @@ public class CameraService {
 
 
         File file = Environment.getExternalStorageDirectory();
-        File files = new File(file.getPath() + "/" + "VkDownload");
+        File files = new File(file.getPath() + "/" + "VkVideo");
         files.mkdir();
         String fullPath = files.getPath() + "/" + Calendar.getInstance().getTime().toString() + ".mp4";
         fullPath = fullPath.replace(" ", "_");
-        File fileOutput = new File(fullPath);
-        // mediaRecorder.setOutputFile(fileOutput);
+        fileOutput = new File(fullPath);
+
         mediaRecorder.setOutputFile(fullPath);
         mediaRecorder.setVideoEncodingBitRate(10000000);
         mediaRecorder.setVideoFrameRate(30);
@@ -290,57 +318,45 @@ public class CameraService {
         mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
         int rotation = display.getRotation();
         mediaRecorder.setOrientationHint(DEFAULT_ORIENTATIONS.get(rotation));
-        /*switch (mSensorOrientation) {
-            case SENSOR_ORIENTATION_DEFAULT_DEGREES:
-                mediaRecorder.setOrientationHint(DEFAULT_ORIENTATIONS.get(rotation));
-                break;
-            case SENSOR_ORIENTATION_INVERSE_DEGREES:
-                mediaRecorder.setOrientationHint(INVERSE_ORIENTATIONS.get(rotation));
-                break;
-        }*/
         mediaRecorder.prepare();
     }
 
-    private Handler handler = new Handler();
+    private File fileOutput;
+
     private CaptureRequest.Builder mPreviewBuilder;
     public void startRecordingVideo() {
         try {
             closePreviewSession();
             setUpMediaRecorder();
+
             SurfaceTexture texture = textureView.getSurfaceTexture();
-            assert texture != null;
             texture.setDefaultBufferSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
             mPreviewBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
             List<Surface> surfaces = new ArrayList<>();
 
-            // Set up Surface for the camera preview
             Surface previewSurface = new Surface(texture);
             surfaces.add(previewSurface);
             mPreviewBuilder.addTarget(previewSurface);
 
-            // Set up Surface for the MediaRecorder
             Surface recorderSurface = mediaRecorder.getSurface();
             surfaces.add(recorderSurface);
             mPreviewBuilder.addTarget(recorderSurface);
 
-            // Start a capture session
-            // Once the session starts, we can update the UI and start recording
             cameraDevice.createCaptureSession(surfaces, new CameraCaptureSession.StateCallback() {
-
                 @Override public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
                     mCaptureSession = cameraCaptureSession;
-                    // updatePreview();
-                    handler.post(() -> {
-                        mediaRecorder.start();
-                    });
+                    try {
+                        mPreviewBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+                        mCaptureSession.setRepeatingRequest(mPreviewBuilder.build(), null, null);
+                    } catch (CameraAccessException ex) {
+                        Log.e(LOG_TAG, "error to start to record video: " + ex.getMessage());
+                    }
+                    mediaRecorder.start();
                 }
 
                 @Override
                 public void onConfigureFailed(@NonNull CameraCaptureSession cameraCaptureSession) {
-                    /*Activity activity = getActivity();
-                    if (null != activity) {
-                        Toast.makeText(activity, "Failed", Toast.LENGTH_SHORT).show();
-                    }*/
+
                 }
             }, null);
         } catch (CameraAccessException | IOException e) {
@@ -356,16 +372,12 @@ public class CameraService {
         }
     }
 
-    public void stopRecordingVideo(Context context) {
-        // UI
-        // mIsRecordingVideo = false;
-        // mButtonVideo.setText(R.string.record);
-        // Stop recording
+    public File stopRecordingVideo() {
+
         mediaRecorder.stop();
         mediaRecorder.reset();
 
-        Toast.makeText(context, "Видео сохранено в папку VKDownload", Toast.LENGTH_SHORT).show();
-        createCameraPreviewSession();
+        return fileOutput;
     }
 
 }

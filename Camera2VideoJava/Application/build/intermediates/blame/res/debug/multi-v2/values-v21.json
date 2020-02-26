@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "/Users/daler9999/Desktop/projects/camera-samples/Camera2VideoJava/Application/build/intermediates/incremental/mergeDebugResources/merged.dir/values-v21/values-v21.xml",
+            "outputFile": "/Users/daler9999/Desktop/projects/vkCup/Camera2VideoJava/Application/build/intermediates/incremental/mergeDebugResources/merged.dir/values-v21/values-v21.xml",
             "map": [
                 {
-                    "source": "/Users/daler9999/Desktop/projects/camera-samples/Camera2VideoJava/Application/src/main/res/values-v21/base-template-styles.xml",
+                    "source": "/Users/daler9999/Desktop/projects/vkCup/Camera2VideoJava/Application/src/main/res/values-v21/base-template-styles.xml",
                     "from": {
                         "startLines": "20",
                         "startColumns": "4",
