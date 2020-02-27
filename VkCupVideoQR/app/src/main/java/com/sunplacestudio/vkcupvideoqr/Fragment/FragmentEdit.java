@@ -2,17 +2,20 @@ package com.sunplacestudio.vkcupvideoqr.Fragment;
 
 import android.graphics.Bitmap;
 import android.media.MediaMetadataRetriever;
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.MediaController;
+import android.widget.VideoView;
 
 import com.sunplacestudio.vkcupvideoqr.R;
 
@@ -20,37 +23,56 @@ import java.io.File;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static com.sunplacestudio.vkcupvideoqr.MainActivity.getDp;
+
 public class FragmentEdit extends Fragment {
 
     private File fileEdit;
+    private int normalDuration;
     private long duration;
     private MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
     private ExecutorService executorService = Executors.newSingleThreadExecutor();
     private CustomLinearLayout layout;
-    private ImageView imageView;
+    private VideoView videoView;
     private int widthConst = 30;
     private int width;
-    private int heigthView;
+    private volatile boolean isSeen = false;
+
+    private long videoStart;
+    private long videoEnd;
+    private long currentFrame;
 
     @Nullable
     @Override public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_edit_video, container, false);
-        imageView = view.findViewById(R.id.imageView);
+        videoView = view.findViewById(R.id.videoView);
         layout = view.findViewById(R.id.linearLayoutBitmaps);
-        EditViewVideo viewLeft = view.findViewById(R.id.frameView);
-        CustomImageView buttonImageLeft = view.findViewById(R.id.imageButtonLeft);
-        buttonImageLeft.setOnMoveLisener((x) -> {
-            ConstraintLayout.LayoutParams layoutParams = (ConstraintLayout.LayoutParams) buttonImageLeft.getLayoutParams();
-            viewLeft.setLeftDraw(x - layoutParams.leftMargin);
+        EditViewVideo editViewVideo = view.findViewById(R.id.frameView);
+        editViewVideo.setOnPercentSwipeListener(new EditViewVideo.OnPercentSwipeListener() {
+            @Override public void onMiddle(int percent) {
+                if (isSeen) return;
+
+                int mills = normalDuration * percent / 100;
+                videoView.seekTo(mills);
+            }
+
+            @Override public void onLeft(int percent) {
+                videoStart = duration * (long) percent / 100;
+            }
+
+            @Override public void onRight(int percent) {
+                videoStart = duration * (long) percent / 100;
+            }
         });
-        heigthView = getDp(56);
+        CustomImageView customImageView = view.findViewById(R.id.imageButtonArrow);
+        editViewVideo.setCustomImageView(customImageView);
 
         if (fileEdit == null) return view;
 
         mediaMetadataRetriever.setDataSource(fileEdit.getPath());
         String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+        normalDuration = Integer.valueOf(time);
         duration = Long.valueOf(time) * 1000L;
-        imageView.setImageBitmap(getBitmapAt(0));
 
         layout.setOnSizeListener((w, h) -> {
             width = w;
@@ -61,11 +83,9 @@ public class FragmentEdit extends Fragment {
         return view;
     }
 
-    public int getDp(int len) { return (int) (len * getContext().getResources().getDisplayMetrics().density + 0.5f); }
-
     private Handler handler = new Handler();
     private void loadImages() {
-        widthConst = getDp(30);
+        widthConst = getDp(getContext(),30);
         long count = width / widthConst;
         final long step = duration / count;
 
@@ -77,7 +97,14 @@ public class FragmentEdit extends Fragment {
                 imageViewPreview.setImageBitmap(bitmap);
                 handler.post(() -> layout.addView(imageViewPreview));
             }
+            handler.post(() -> setupVideo());
         });
+    }
+
+    private void setupVideo() {
+        videoView.requestFocus();
+        Uri uri = Uri.parse(fileEdit.getPath());
+        videoView.setVideoURI(uri);
     }
 
     private Bitmap getBitmapAt(long mills) {

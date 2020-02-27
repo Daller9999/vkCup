@@ -3,6 +3,7 @@ package com.sunplacestudio.vkcupmarket;
 import android.Manifest;
 import android.content.Intent;
 import android.os.Build;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -17,12 +18,24 @@ import com.vk.sdk.VKAccessToken;
 import com.vk.sdk.VKCallback;
 import com.vk.sdk.VKScope;
 import com.vk.sdk.VKSdk;
+import com.vk.sdk.api.VKApiConst;
 import com.vk.sdk.api.VKError;
+import com.vk.sdk.api.VKParameters;
+import com.vk.sdk.api.VKRequest;
+import com.vk.sdk.api.VKResponse;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static java.lang.Thread.sleep;
 
 public class MainActivity extends AppCompatActivity {
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -40,14 +53,13 @@ public class MainActivity extends AppCompatActivity {
         if (!VKSdk.isLoggedIn())
             VKSdk.login(this, otherPermissions);
         else {
-            loadFragmentMarketCityList();
+            new LoadAllFaves().start();
         }
 
         Log.e("mesUri", "api is : " + VKSdk.getApiVersion());
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (!VKSdk.onActivityResult(requestCode, resultCode, data, new VKCallback<VKAccessToken>() {
 
             @Override public void onResult(VKAccessToken res) {
@@ -80,5 +92,56 @@ public class MainActivity extends AppCompatActivity {
 
     public void popBackStack() {
         getSupportFragmentManager().popBackStack();
+    }
+
+    private Handler handler = new Handler();
+    private List<Integer> favesId = new ArrayList<>();
+    private class LoadAllFaves extends Thread {
+        private boolean wait = false;
+        private int offset = 0;
+        private int count = 1;
+
+        @Override public void run() {
+            while (count > 0) {
+                VKRequest vkRequest = new VKRequest("fave.get", VKParameters.from("item_type", "product", "offset", offset, "count", 100));
+                wait = true;
+                vkRequest.executeWithListener(vkRequestListener);
+                try {
+                    while (wait)
+                        sleep(50);
+                } catch (InterruptedException ex) {
+                    //
+                }
+                offset += 100;
+            }
+            handler.post(() -> loadFragmentMarketCityList());
+        }
+
+        VKRequest.VKRequestListener vkRequestListener = new VKRequest.VKRequestListener() {
+            @Override public void onComplete(VKResponse response) {
+                super.onComplete(response);
+                try {
+                    JSONArray jsonArray = response.json.getJSONObject("response").getJSONArray("items");
+                    count = jsonArray.length();
+                    int id;
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                        id = jsonArray.getJSONObject(i).getInt("id");
+                        favesId.add(id);
+                    }
+                    wait = false;
+                } catch (JSONException ex) {
+                    //
+                }
+            }
+
+            @Override public void onError(VKError error) {
+                super.onError(error);
+                Toast.makeText(MainActivity.this, "Проблема при загрузке данных", Toast.LENGTH_SHORT).show();
+            }
+        };
+    }
+
+    public List<Integer> getFavesId() {
+        return favesId;
     }
 }

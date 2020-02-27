@@ -15,12 +15,21 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.sunplacestudio.vkcupmarket.MainActivity;
 import com.sunplacestudio.vkcupmarket.Markets.ProductInfo;
 import com.sunplacestudio.vkcupmarket.R;
+import com.vk.sdk.VKAccessToken;
+import com.vk.sdk.api.VKError;
+import com.vk.sdk.api.VKParameters;
+import com.vk.sdk.api.VKRequest;
+import com.vk.sdk.api.VKResponse;
+
+import org.json.JSONException;
 
 import java.io.InputStream;
+import java.util.List;
 
 import static android.support.v7.content.res.AppCompatResources.getDrawable;
 
@@ -37,8 +46,10 @@ public class FragmentProductInfo extends Fragment {
     private final String noAdd = "Удалить из избранного";
 
 
+    private int userId;
     private ImageView imageView;
     private Handler handler = new Handler();
+    private int count = 0;
 
     @Override public View onCreateView(@NonNull LayoutInflater inflater, final ViewGroup container, Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,13 +58,23 @@ public class FragmentProductInfo extends Fragment {
         drawableSelect = getDrawable(view.getContext(), R.drawable.button_select);
         drawableUnSelect = getDrawable(view.getContext(), R.drawable.button_not_selected);
 
+        if (getActivity() != null) {
+            List<Integer> faves = ((MainActivity) getActivity()).getFavesId();
+            added = faves.contains(productInfo.getId());
+        }
+
         Button buttonSelect = view.findViewById(R.id.buttonAddProduct);
         buttonSelect.setOnClickListener((v) -> {
             added = !added;
             buttonSelect.setTextColor(added ? colorSelect : colorUn);
             buttonSelect.setBackground(added ? drawableSelect : drawableUnSelect);
             buttonSelect.setText(added ? add : noAdd);
+            makeFave(added);
         });
+
+        buttonSelect.setTextColor(added ? colorSelect : colorUn);
+        buttonSelect.setBackground(added ? drawableSelect : drawableUnSelect);
+        buttonSelect.setText(added ? add : noAdd);
 
         TextView textViewName1 = view.findViewById(R.id.textViewProductName);
         TextView textViewNam2 = view.findViewById(R.id.textViewProductName2);
@@ -78,7 +99,34 @@ public class FragmentProductInfo extends Fragment {
                 ((MainActivity) getActivity()).popBackStack();
         });
 
+        userId = Integer.valueOf(VKAccessToken.currentToken().userId);
+
         return view;
+    }
+
+    private void makeFave(boolean b) {
+        String coomand, mes1, mes2;
+        if (b) {
+            coomand = "fave.addProduct";
+            mes1 = "Товар успешно добавлен в закладки";
+            mes2 = "Произошла ошибка при добавлении товара в закладки";
+        } else {
+            coomand = "fave.removeProduct";
+            mes1 = "Товар успешно удалён из закладок";
+            mes2 = "Не удалось удалить товар из закладом";
+        }
+        VKRequest vkRequest = new VKRequest(coomand, VKParameters.from("owner_id", userId, "id",  productInfo.getId()));
+        vkRequest.executeWithListener(new VKRequest.VKRequestListener() {
+            @Override public void onComplete(VKResponse response) {
+                super.onComplete(response);
+                Toast.makeText(getContext(), mes1, Toast.LENGTH_SHORT).show();
+            }
+
+            @Override public void onError(VKError error) {
+                super.onError(error);
+                Toast.makeText(getContext(), mes2, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     public void setProductInfo(ProductInfo productInfo) {

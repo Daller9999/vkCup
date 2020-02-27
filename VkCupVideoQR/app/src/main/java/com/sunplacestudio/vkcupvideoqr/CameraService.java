@@ -29,11 +29,14 @@ import android.view.TextureView;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import static com.sunplacestudio.vkcupvideoqr.MainActivity.LOG_TAG;
 
@@ -97,7 +100,7 @@ public class CameraService {
 
     private static Size chooseVideoSize4and3(Size[] choices) {
         for (Size size : choices)
-            if (size.getWidth() == size.getHeight() * 4 / 3 && size.getWidth() <= 1080)
+            if (size.getWidth() == size.getHeight() * 9 / 2 && size.getWidth() <= 1080)
                 return size;
         return choices[choices.length - 1];
     }
@@ -107,7 +110,7 @@ public class CameraService {
             if (size.getWidth() == 1920 && size.getHeight() == 1080)
                 return size;
         }
-        return chooseVideoSize4and3(choices);
+        return choices[choices.length - 1];
     }
 
     /*private static Size chooseOptimalSize(Size[] choices, int width, int height, Size aspectRatio) {
@@ -160,8 +163,10 @@ public class CameraService {
             CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(cameraId);
             StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
 
+            // mVideoSize = chooseVideoSize4and3(map.getOutputSizes(MediaRecorder.class));
             mVideoSize = chooseVideoSizeFullScreen(map.getOutputSizes(MediaRecorder.class));
             mPreviewSize = chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class), width, height, mVideoSize);
+            mPreviewSize = mVideoSize;
 
             textureView.setAspectRatio(mPreviewSize.getHeight(), mPreviewSize.getWidth());
             configureTransform(width, height);
@@ -297,17 +302,20 @@ public class CameraService {
         DEFAULT_ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
 
-    private void setUpMediaRecorder() throws IOException {
+    //  /storage/emulated/0/Android/data/com.sunplacestudio.vkcupvideoqr/files/Thu_Feb_27_17:16:53_GMT+03:00_2020.mp4
+
+    private void setUpMediaRecorder(Context context) throws IOException {
         mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
         mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
 
 
-        File file = Environment.getExternalStorageDirectory();
+        /*File file = Environment.getExternalStorageDirectory();
         File files = new File(file.getPath() + "/" + "VkVideo");
         files.mkdir();
         String fullPath = files.getPath() + "/" + Calendar.getInstance().getTime().toString() + ".mp4";
-        fullPath = fullPath.replace(" ", "_");
+        fullPath = fullPath.replace(" ", "_");*/
+        String fullPath = getVideoFilePath(context);
         fileOutput = new File(fullPath);
 
         mediaRecorder.setOutputFile(fullPath);
@@ -321,13 +329,22 @@ public class CameraService {
         mediaRecorder.prepare();
     }
 
+    private String getVideoFilePath(Context context) {
+        final File dir = context.getExternalFilesDir(null);
+        return (dir == null ? "" : (dir.getAbsolutePath() + "/")) + "videoAt" + getTime() + ".mp4";
+    }
+
+    public static String getTime() {
+        return new SimpleDateFormat("HH_mm_ss", Locale.getDefault()).format(new Date());
+    }
+
     private File fileOutput;
 
     private CaptureRequest.Builder mPreviewBuilder;
-    public void startRecordingVideo() {
+    public void startRecordingVideo(Context context) {
         try {
             closePreviewSession();
-            setUpMediaRecorder();
+            setUpMediaRecorder(context);
 
             SurfaceTexture texture = textureView.getSurfaceTexture();
             texture.setDefaultBufferSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());

@@ -3,21 +3,23 @@ package com.sunplacestudio.vkcupvideoqr.Fragment;
 import android.content.Context;
 import android.support.v7.widget.AppCompatImageView;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 
 public class CustomImageView extends AppCompatImageView implements View.OnTouchListener {
 
     private float dX;
     private float startX = -1;
-    private OnMoveLisener onMoveLisener;
+    private float endX = 1;
+    private OnMoveListener onMoveListener;
 
-    public void setOnMoveLisener(OnMoveLisener onMoveLisener) {
-        this.onMoveLisener = onMoveLisener;
+    public void setOnMoveListener(OnMoveListener onMoveListener) {
+        this.onMoveListener = onMoveListener;
+    }
+
+    public void setStartEndX(float startX, float endX) {
+        this.startX = startX;
+        this.endX = endX;
     }
 
     public CustomImageView(Context context) {
@@ -49,8 +51,8 @@ public class CustomImageView extends AppCompatImageView implements View.OnTouchL
                 float x = motionEvent.getRawX() + dX;
                 if (x < startX)
                     return false;
-                if (onMoveLisener != null)
-                    onMoveLisener.onMove((int) x);
+                if (onMoveListener != null)
+                    onMoveListener.onMove((int) x);
                 view.animate()
                         .x(x)
                         // .y(motionEvent.getRawY() + dY)
@@ -61,7 +63,7 @@ public class CustomImageView extends AppCompatImageView implements View.OnTouchL
         return true;
     }
 
-    public interface OnMoveLisener {
+    public interface OnMoveListener {
         void onMove(int x);
     }
 }

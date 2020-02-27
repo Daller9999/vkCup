@@ -18,7 +18,6 @@ import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.Toast;
 
 import com.sunplacestudio.vkcupvideoqr.AutoFitTextureView;
 import com.sunplacestudio.vkcupvideoqr.CameraService;
@@ -51,7 +50,7 @@ public class FragmentCamera extends Fragment {
     @Override public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_camera, container, false);
 
-        autoFitTextureView = view.findViewById(R.id.imageView);
+        autoFitTextureView = view.findViewById(R.id.videoView);
         autoFitTextureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
             @Override public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int i, int i1) {
                 width = i;
@@ -115,7 +114,7 @@ public class FragmentCamera extends Fragment {
         buttonVideo.setOnClickListener((v) -> {
             if (cameraServiceCurrent != null) {
                 if (isMakeVideo)
-                    cameraServiceCurrent.startRecordingVideo();
+                    cameraServiceCurrent.startRecordingVideo(getContext());
                 else {
                     File file = cameraServiceCurrent.stopRecordingVideo();
                     if (getActivity() != null)
