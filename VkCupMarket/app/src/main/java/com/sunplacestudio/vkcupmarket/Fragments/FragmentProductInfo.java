@@ -41,15 +41,15 @@ public class FragmentProductInfo extends Fragment {
     private Drawable drawableUnSelect;
     private int colorUn = Color.parseColor("#3F8AE0");
     private int colorSelect = Color.WHITE;
-    private boolean added = true;
+    private boolean added = false;
     private final String add = "Добавить в избранное";
     private final String noAdd = "Удалить из избранного";
 
 
-    private int userId;
     private ImageView imageView;
     private Handler handler = new Handler();
     private int count = 0;
+    private int marketId;
 
     @Override public View onCreateView(@NonNull LayoutInflater inflater, final ViewGroup container, Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,23 +58,23 @@ public class FragmentProductInfo extends Fragment {
         drawableSelect = getDrawable(view.getContext(), R.drawable.button_select);
         drawableUnSelect = getDrawable(view.getContext(), R.drawable.button_not_selected);
 
-        if (getActivity() != null) {
+        /*if (getActivity() != null) {
             List<Integer> faves = ((MainActivity) getActivity()).getFavesId();
             added = faves.contains(productInfo.getId());
-        }
+        }*/
 
         Button buttonSelect = view.findViewById(R.id.buttonAddProduct);
         buttonSelect.setOnClickListener((v) -> {
             added = !added;
-            buttonSelect.setTextColor(added ? colorSelect : colorUn);
-            buttonSelect.setBackground(added ? drawableSelect : drawableUnSelect);
-            buttonSelect.setText(added ? add : noAdd);
+            buttonSelect.setTextColor(added ? colorUn : colorSelect);
+            buttonSelect.setBackground(added ? drawableUnSelect : drawableSelect);
+            buttonSelect.setText(added ? noAdd : add);
             makeFave(added);
         });
 
-        buttonSelect.setTextColor(added ? colorSelect : colorUn);
-        buttonSelect.setBackground(added ? drawableSelect : drawableUnSelect);
-        buttonSelect.setText(added ? add : noAdd);
+        buttonSelect.setTextColor(added ? colorUn : colorSelect);
+        buttonSelect.setBackground(added ? drawableUnSelect : drawableSelect);
+        buttonSelect.setText(added ? noAdd : add);
 
         TextView textViewName1 = view.findViewById(R.id.textViewProductName);
         TextView textViewNam2 = view.findViewById(R.id.textViewProductName2);
@@ -99,8 +99,6 @@ public class FragmentProductInfo extends Fragment {
                 ((MainActivity) getActivity()).popBackStack();
         });
 
-        userId = Integer.valueOf(VKAccessToken.currentToken().userId);
-
         return view;
     }
 
@@ -115,7 +113,7 @@ public class FragmentProductInfo extends Fragment {
             mes1 = "Товар успешно удалён из закладок";
             mes2 = "Не удалось удалить товар из закладом";
         }
-        VKRequest vkRequest = new VKRequest(coomand, VKParameters.from("owner_id", userId, "id",  productInfo.getId()));
+        VKRequest vkRequest = new VKRequest(coomand, VKParameters.from("owner_id", -marketId, "id",  productInfo.getId()));
         vkRequest.executeWithListener(new VKRequest.VKRequestListener() {
             @Override public void onComplete(VKResponse response) {
                 super.onComplete(response);
@@ -129,8 +127,9 @@ public class FragmentProductInfo extends Fragment {
         });
     }
 
-    public void setProductInfo(ProductInfo productInfo) {
+    public void setProductInfo(int marketId, ProductInfo productInfo) {
         this.productInfo = productInfo;
+        this.marketId = marketId;
     }
 
     private void loadImage() {

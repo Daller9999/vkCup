@@ -64,8 +64,8 @@
         android:id="@+id/textViewProductCost"
         android:layout_width="0dp"
         android:layout_height="24dp" />
-    
-    <TextView
+
+    <ScrollView
         app:layout_constraintTop_toBottomOf="@id/textViewProductCost"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -76,12 +76,18 @@
         android:layout_marginBottom="84dp"
         android:layout_marginTop="12dp"
         android:scrollbars="vertical"
-        android:id="@+id/textViewDescription"
+        android:id="@+id/scrollViewDescription"
         android:layout_width="0dp"
-        android:layout_height="0dp" />
+        android:layout_height="0dp">
+        <TextView
+            android:scrollbars="vertical"
+            android:id="@+id/textViewDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </ScrollView>
     
     <Button
-        app:layout_constraintTop_toBottomOf="@id/textViewDescription"
+        app:layout_constraintTop_toBottomOf="@id/scrollViewDescription"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
 

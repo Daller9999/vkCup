@@ -49,8 +49,10 @@ public class FragmentMarketGoods extends Fragment {
         recyclerAdapterGoods = new RecyclerAdapterGoods(view.getContext());
         recyclerView.setAdapter(recyclerAdapterGoods);
         recyclerAdapterGoods.setProductListener((productInfo) -> {
-            if (getActivity() != null)
-                ((MainActivity) getActivity()).loadFragmentProductInfo(productInfo);
+            if (getActivity() != null) {
+                FragmentMarketGoods.this.productInfos = recyclerAdapterGoods.getListAll();
+                ((MainActivity) getActivity()).loadFragmentProductInfo(marketInfo.getId(), productInfo);
+            }
         });
 
         TextView textViewName = view.findViewById(R.id.textViewMarketName);
@@ -85,7 +87,7 @@ public class FragmentMarketGoods extends Fragment {
         @Override public void run() {
             while (count > 0) {
                 VKRequest vkRequest = new VKRequest("market.get",
-                        VKParameters.from(VKApiConst.OWNER_ID, -marketInfo.getId(), "count", 200, "offset", offset));
+                        VKParameters.from(VKApiConst.OWNER_ID, -marketInfo.getId(), "count", 200, "offset", offset, "extended", 1));
                 wait = true;
                 vkRequest.executeWithListener(vkRequestListener);
                 try {

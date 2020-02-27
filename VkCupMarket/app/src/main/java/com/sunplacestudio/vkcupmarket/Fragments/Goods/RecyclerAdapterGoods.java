@@ -41,15 +41,27 @@ public class RecyclerAdapterGoods extends RecyclerView.Adapter<RecyclerAdapterGo
         httpsNeed = new ArrayList<>();
     }
 
+    public List<ProductInfo> getListAll() {
+        List<ProductInfo> list = new ArrayList<>();
+        for (ProductInfo[] productInfos : this.list)
+            for (ProductInfo productInfo : productInfos)
+                list.add(productInfo);
+        return list;
+    }
+
     void addList(List<ProductInfo> productInfos) {
+        ProductInfo productInfo;
         for (int i = 0; i < productInfos.size(); i += 2) {
             ProductInfo[] groupInfosNew = new ProductInfo[2];
             String[] strings = new String[2];
             boolean[] booleans = new boolean[2];
             for (int j = 0; j < 2 && j + i < productInfos.size(); j++) {
-                groupInfosNew[j] = productInfos.get(j + i);
-                strings[j] = productInfos.get(j + i).getHttpBitmap();
-                booleans[j] = productInfos.get(j + i).getBitmap() == null;
+                productInfo = productInfos.get(j + i);
+                if (productInfo != null) {
+                    groupInfosNew[j] = productInfo;
+                    strings[j] = productInfo.getHttpBitmap();
+                    booleans[j] = productInfo.getBitmap() == null;
+                }
             }
             httpsNeed.add(booleans);
             https.add(strings);

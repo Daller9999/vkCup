@@ -18,6 +18,7 @@ import com.vk.sdk.VKAccessToken;
 import com.vk.sdk.VKCallback;
 import com.vk.sdk.VKScope;
 import com.vk.sdk.VKSdk;
+import com.vk.sdk.api.VKApi;
 import com.vk.sdk.api.VKApiConst;
 import com.vk.sdk.api.VKError;
 import com.vk.sdk.api.VKParameters;
@@ -53,7 +54,8 @@ public class MainActivity extends AppCompatActivity {
         if (!VKSdk.isLoggedIn())
             VKSdk.login(this, otherPermissions);
         else {
-            new LoadAllFaves().start();
+            loadFragmentMarketCityList();
+            // new LoadAllFaves().start();
         }
 
         Log.e("mesUri", "api is : " + VKSdk.getApiVersion());
@@ -84,9 +86,9 @@ public class MainActivity extends AppCompatActivity {
         getSupportFragmentManager().beginTransaction().replace(R.id.container, fragmentMarket).addToBackStack(FragmentMarketGoods.class.getName()).commit();
     }
 
-    public void loadFragmentProductInfo(ProductInfo productInfo) {
+    public void loadFragmentProductInfo(int id, ProductInfo productInfo) {
         FragmentProductInfo fragmentProductInfo = new FragmentProductInfo();
-        fragmentProductInfo.setProductInfo(productInfo);
+        fragmentProductInfo.setProductInfo(id, productInfo);
         getSupportFragmentManager().beginTransaction().replace(R.id.container, fragmentProductInfo).addToBackStack(FragmentProductInfo.class.getName()).commit();
     }
 
