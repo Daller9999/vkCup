@@ -12,9 +12,9 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -32,7 +32,6 @@ import com.sunplacestudio.vkcupvideoqr.R;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -152,7 +151,6 @@ public class FragmentEdit extends Fragment {
         widthConst = getDp(getContext(),30);
         long count = width / widthConst;
         final long step = duration / count;
-        videoView.seekTo(1000);
 
         executorService.execute(() -> {
             for (long i = 0; i < duration; i += step) {
@@ -170,6 +168,7 @@ public class FragmentEdit extends Fragment {
         videoView.requestFocus();
         Uri uri = Uri.parse(fileEdit.getPath());
         videoView.setVideoURI(uri);
+        videoView.seekTo(1000);
     }
 
     private Bitmap getBitmapAt(long mills) {
@@ -285,6 +284,6 @@ public class FragmentEdit extends Fragment {
         } finally {
             muxer.release();
         }
-        Toast.makeText(getContext(), "Видео сохранено", Toast.LENGTH_SHORT).show();
+        Toast.makeText(getContext(), "Видео сохранено по пути : " + dstPath, Toast.LENGTH_SHORT).show();
     }
 }

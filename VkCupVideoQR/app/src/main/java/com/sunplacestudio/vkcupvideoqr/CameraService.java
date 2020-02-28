@@ -17,13 +17,18 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.MediaRecorder;
 import android.os.Build;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
+import github.nisrulz.qreader.QRDataListener;
+import github.nisrulz.qreader.QREader;
+
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
 import android.view.Display;
 import android.view.Surface;
+import android.view.SurfaceView;
 import android.view.TextureView;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
@@ -98,7 +103,7 @@ public class CameraService {
     }
 
     public void openCamera(Context context, int width, int height) {
-        textureView.setSurfaceTextureListener(surfaceTextureListener);
+        // textureView.setSurfaceTextureListener(surfaceTextureListener);
         try {
             CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(cameraId);
             StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
@@ -172,6 +177,8 @@ public class CameraService {
         }
     }
 
+    public String getCameraId() { return cameraId; }
+
     private void startPreview() {
         try {
             closePreviewSession();
@@ -183,8 +190,7 @@ public class CameraService {
             mPreviewBuilder.addTarget(previewSurface);
 
             cameraDevice.createCaptureSession(Collections.singletonList(previewSurface), new CameraCaptureSession.StateCallback() {
-                        @Override
-                        public void onConfigured(@NonNull CameraCaptureSession session) {
+                        @Override public void onConfigured(@NonNull CameraCaptureSession session) {
                             mCaptureSession = session;
                             try {
                                 mCaptureSession.setRepeatingRequest(mPreviewBuilder.build(), null, null);
@@ -201,6 +207,7 @@ public class CameraService {
             e.printStackTrace();
         }
     }
+
 
     private static final SparseIntArray DEFAULT_ORIENTATIONS = new SparseIntArray();
     static {

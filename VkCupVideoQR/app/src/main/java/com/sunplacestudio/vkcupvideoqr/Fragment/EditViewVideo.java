@@ -15,7 +15,7 @@ import android.view.View;
 
 import com.sunplacestudio.vkcupvideoqr.R;
 
-import static android.support.v4.content.ContextCompat.getDrawable;
+import static androidx.core.content.ContextCompat.getDrawable;
 import static com.sunplacestudio.vkcupvideoqr.MainActivity.getDp;
 
 public class EditViewVideo extends View implements View.OnTouchListener {

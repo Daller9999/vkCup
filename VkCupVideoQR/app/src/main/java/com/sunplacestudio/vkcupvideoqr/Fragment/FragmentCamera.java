@@ -1,21 +1,26 @@
 package com.sunplacestudio.vkcupvideoqr.Fragment;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.SurfaceView;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.Toast;
 
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
 import com.sunplacestudio.vkcupvideoqr.AutoFitTextureView;
 import com.sunplacestudio.vkcupvideoqr.CameraService;
 import com.sunplacestudio.vkcupvideoqr.MainActivity;
@@ -58,6 +63,7 @@ public class FragmentCamera extends Fragment {
             @Override public void onSurfaceTextureUpdated(SurfaceTexture surfaceTexture) {}
         });
 
+        SurfaceView surfaceView = view.findViewById(R.id.surfaceView);
         CameraManager cameraManager = (CameraManager) view.getContext().getSystemService(Context.CAMERA_SERVICE);
         try {
             for (String cameraID : cameraManager.getCameraIdList()) {
@@ -66,9 +72,9 @@ public class FragmentCamera extends Fragment {
                 int typeFacing = cameraCharacteristics.get(CameraCharacteristics.LENS_FACING);
 
                 if (typeFacing ==  CameraCharacteristics.LENS_FACING_FRONT)
-                    cameraIdsFront.add(new CameraService(cameraID, autoFitTextureView, getActivity()));
+                    cameraIdsFront.add(new CameraService(cameraID, autoFitTextureView, surfaceView, getActivity()));
                 else if (typeFacing ==  CameraCharacteristics.LENS_FACING_BACK)
-                    cameraIdsBack.add(new CameraService(cameraID, autoFitTextureView, getActivity()));
+                    cameraIdsBack.add(new CameraService(cameraID, autoFitTextureView, surfaceView, getActivity()));
 
                 /*StreamConfigurationMap configurationMap = cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
                 Size[] sizesJPEG = configurationMap.getOutputSizes(ImageFormat.JPEG);
