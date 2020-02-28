@@ -19,13 +19,14 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.Toast;
 
-import com.google.zxing.integration.android.IntentIntegrator;
-import com.google.zxing.integration.android.IntentResult;
 import com.sunplacestudio.vkcupvideoqr.AutoFitTextureView;
 import com.sunplacestudio.vkcupvideoqr.CameraService;
 import com.sunplacestudio.vkcupvideoqr.MainActivity;
 import com.sunplacestudio.vkcupvideoqr.R;
 import com.sunplacestudio.vkcupvideoqr.RoundButton;
+
+import net.sourceforge.zbar.Config;
+import net.sourceforge.zbar.ImageScanner;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -34,7 +35,6 @@ import java.util.List;
 import static com.sunplacestudio.vkcupvideoqr.MainActivity.LOG_TAG;
 
 public class FragmentCamera extends Fragment {
-    private CameraManager mCameraManager = null;
     private List<CameraService> cameraIdsFront = new ArrayList<>();
     private List<CameraService> cameraIdsBack = new ArrayList<>();
 
@@ -42,6 +42,7 @@ public class FragmentCamera extends Fragment {
     private boolean front = false;
     private boolean isMakeVideo = true;
     private int width;
+    private ViewSqare viewFrame;
     private int height;
 
     private CameraService cameraServiceCurrent = null;
@@ -49,6 +50,8 @@ public class FragmentCamera extends Fragment {
     @Nullable
     @Override public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_camera, container, false);
+
+        viewFrame = view.findViewById(R.id.viewFrame);
 
         autoFitTextureView = view.findViewById(R.id.videoView);
         autoFitTextureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
@@ -63,7 +66,6 @@ public class FragmentCamera extends Fragment {
             @Override public void onSurfaceTextureUpdated(SurfaceTexture surfaceTexture) {}
         });
 
-        SurfaceView surfaceView = view.findViewById(R.id.surfaceView);
         CameraManager cameraManager = (CameraManager) view.getContext().getSystemService(Context.CAMERA_SERVICE);
         try {
             for (String cameraID : cameraManager.getCameraIdList()) {
@@ -72,21 +74,9 @@ public class FragmentCamera extends Fragment {
                 int typeFacing = cameraCharacteristics.get(CameraCharacteristics.LENS_FACING);
 
                 if (typeFacing ==  CameraCharacteristics.LENS_FACING_FRONT)
-                    cameraIdsFront.add(new CameraService(cameraID, autoFitTextureView, surfaceView, getActivity()));
+                    cameraIdsFront.add(new CameraService(cameraID, autoFitTextureView, onImageRecognizeListener, getActivity()));
                 else if (typeFacing ==  CameraCharacteristics.LENS_FACING_BACK)
-                    cameraIdsBack.add(new CameraService(cameraID, autoFitTextureView, surfaceView, getActivity()));
-
-                /*StreamConfigurationMap configurationMap = cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-                Size[] sizesJPEG = configurationMap.getOutputSizes(ImageFormat.JPEG);
-                if (sizesJPEG != null) {
-                    String sT = typeFacing == CameraCharacteristics.LENS_FACING_BACK ? "BACK" : "FRONT";
-                    Log.i(LOG_TAG, "camera id is : " + cameraID + " type is " + sT);
-                    for (Size item:sizesJPEG) {
-                        Log.i(LOG_TAG, "w:"+item.getWidth()+" h:"+item.getHeight());
-                    }
-                }  else {
-                    Log.i(LOG_TAG, "camera don`t support JPEG");
-                }*/
+                    cameraIdsBack.add(new CameraService(cameraID, autoFitTextureView, onImageRecognizeListener, getActivity()));
             }
         } catch(CameraAccessException e){
             Log.e(LOG_TAG, e.getMessage());
@@ -132,4 +122,15 @@ public class FragmentCamera extends Fragment {
 
         return view;
     }
+
+    private long lastRecognize = 0;
+    private CameraService.OnImageRecognizeListener onImageRecognizeListener = (text) -> {
+        if (text == null && System.currentTimeMillis() - lastRecognize > 3000)
+            viewFrame.setVisibility(View.GONE);
+        else if (text != null && System.currentTimeMillis() - lastRecognize > 2000) {
+            Toast.makeText(getContext(), "QR код : " + text, Toast.LENGTH_SHORT).show();
+            viewFrame.setVisibility(View.VISIBLE);
+            lastRecognize = System.currentTimeMillis();
+        }
+    };
 }

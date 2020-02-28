@@ -10,14 +10,20 @@ public class ProductInfo {
     private String httpBitmap;
     private Bitmap bitmap;
     private String description;
+    private boolean isFavorite;
 
-    public ProductInfo(String name, int id, String httpBitmap, String cost, String description) {
+    public ProductInfo(String name, int id, String httpBitmap, String cost, String description, boolean isFavorite) {
         this.name = name;
         this.id = id;
         this.httpBitmap = httpBitmap;
         this.cost = cost;
         this.description = description;
+        this.isFavorite = isFavorite;
     }
+
+    public void setFavorite(boolean favorite) { isFavorite = favorite; }
+
+    public boolean isFavorite() { return isFavorite; }
 
     public int getId() { return id; }
 

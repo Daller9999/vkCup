@@ -87,7 +87,7 @@ public class FragmentMarketGoods extends Fragment {
         @Override public void run() {
             while (count > 0) {
                 VKRequest vkRequest = new VKRequest("market.get",
-                        VKParameters.from(VKApiConst.OWNER_ID, -marketInfo.getId(), "count", 200, "offset", offset, "extended", 1));
+                        VKParameters.from(VKApiConst.OWNER_ID, -marketInfo.getId(), "count", 200, "offset", offset, "extended", 0, "fields", "is_favorite"));
                 wait = true;
                 vkRequest.executeWithListener(vkRequestListener);
                 try {
@@ -111,6 +111,7 @@ public class FragmentMarketGoods extends Fragment {
                     String name, cost, http, description;
                     int id;
                     JSONObject jsonObject;
+                    boolean favorite = false;
                     for (int i = 0; i < jsonArray.length(); i++) {
                         jsonObject = jsonArray.getJSONObject(i);
                         name = jsonObject.getString("title");
@@ -118,7 +119,12 @@ public class FragmentMarketGoods extends Fragment {
                         id = jsonObject.getInt("id");
                         http = jsonObject.getString("thumb_photo");
                         description = jsonObject.getString("description");
-                        productInfo = new ProductInfo(name, id, http, cost, description);
+                        try {
+                            favorite = jsonObject.getString("is_favorite").equals("true");
+                        } catch (JSONException ex) {
+                            favorite = false;
+                        }
+                        productInfo = new ProductInfo(name, id, http, cost, description, favorite);
                         productInfos.add(productInfo);
                     }
                     recyclerAdapterGoods.addList(productInfos);

@@ -63,4 +63,21 @@
         android:id="@+id/buttonVideo"
         android:layout_width="64dp"
         android:layout_height="64dp" />
+
+    <com.sunplacestudio.vkcupvideoqr.Fragment.ViewSqare
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+
+        android:visibility="gone"
+        android:id="@+id/viewFrame"
+        android:background="@drawable/background_qr_code"
+        android:layout_marginBottom="200dp"
+        android:layout_marginTop="200dp"
+        android:layout_marginRight="40dp"
+        android:layout_marginStart="40dp"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content">
+    </com.sunplacestudio.vkcupvideoqr.Fragment.ViewSqare>
 </androidx.constraintlayout.widget.ConstraintLayout>

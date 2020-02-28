@@ -81,8 +81,8 @@ public class FragmentEdit extends Fragment {
         textViewCurrentTime.setText("00:00:01");
         TextView textViewLastTime = view.findViewById(R.id.textViewLastTime);
 
-        EditViewVideo editViewVideo = view.findViewById(R.id.frameView);
-        editViewVideo.setOnPercentSwipeListener(new EditViewVideo.OnPercentSwipeListener() {
+        EditVideoView editVideoView = view.findViewById(R.id.frameView);
+        editVideoView.setOnPercentSwipeListener(new EditVideoView.OnPercentSwipeListener() {
             @Override public void onMiddle(int percent) {
                 if (isSeen) return;
 
@@ -104,7 +104,7 @@ public class FragmentEdit extends Fragment {
             }
         });
         CustomImageView customImageView = view.findViewById(R.id.imageButtonArrow);
-        editViewVideo.setCustomImageView(customImageView);
+        editVideoView.setCustomImageView(customImageView);
 
         mediaMetadataRetriever.setDataSource(fileEdit.getPath());
         String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);

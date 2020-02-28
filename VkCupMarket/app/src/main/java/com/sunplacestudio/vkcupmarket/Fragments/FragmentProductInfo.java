@@ -63,6 +63,7 @@ public class FragmentProductInfo extends Fragment {
             added = faves.contains(productInfo.getId());
         }*/
 
+        added = productInfo.isFavorite();
         Button buttonSelect = view.findViewById(R.id.buttonAddProduct);
         buttonSelect.setOnClickListener((v) -> {
             added = !added;
@@ -117,6 +118,7 @@ public class FragmentProductInfo extends Fragment {
         vkRequest.executeWithListener(new VKRequest.VKRequestListener() {
             @Override public void onComplete(VKResponse response) {
                 super.onComplete(response);
+                productInfo.setFavorite(b);
                 Toast.makeText(getContext(), mes1, Toast.LENGTH_SHORT).show();
             }
 

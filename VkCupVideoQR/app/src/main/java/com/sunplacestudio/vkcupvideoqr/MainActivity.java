@@ -16,9 +16,14 @@ import com.sunplacestudio.vkcupvideoqr.Fragment.FragmentEdit;
 import java.io.File;
 
 
+
 public class MainActivity extends AppCompatActivity {
 
     public static final String LOG_TAG = "mesUri";
+
+    /*static {
+        System.loadLibrary("iconv");
+    }*/
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

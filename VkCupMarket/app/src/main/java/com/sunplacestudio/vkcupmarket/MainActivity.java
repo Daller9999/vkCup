@@ -54,8 +54,8 @@ public class MainActivity extends AppCompatActivity {
         if (!VKSdk.isLoggedIn())
             VKSdk.login(this, otherPermissions);
         else {
-            loadFragmentMarketCityList();
             // new LoadAllFaves().start();
+            loadFragmentMarketCityList();
         }
 
         Log.e("mesUri", "api is : " + VKSdk.getApiVersion());
@@ -96,54 +96,4 @@ public class MainActivity extends AppCompatActivity {
         getSupportFragmentManager().popBackStack();
     }
 
-    private Handler handler = new Handler();
-    private List<Integer> favesId = new ArrayList<>();
-    private class LoadAllFaves extends Thread {
-        private boolean wait = false;
-        private int offset = 0;
-        private int count = 1;
-
-        @Override public void run() {
-            while (count > 0) {
-                VKRequest vkRequest = new VKRequest("fave.get", VKParameters.from("item_type", "product", "offset", offset, "count", 100));
-                wait = true;
-                vkRequest.executeWithListener(vkRequestListener);
-                try {
-                    while (wait)
-                        sleep(50);
-                } catch (InterruptedException ex) {
-                    //
-                }
-                offset += 100;
-            }
-            handler.post(() -> loadFragmentMarketCityList());
-        }
-
-        VKRequest.VKRequestListener vkRequestListener = new VKRequest.VKRequestListener() {
-            @Override public void onComplete(VKResponse response) {
-                super.onComplete(response);
-                try {
-                    JSONArray jsonArray = response.json.getJSONObject("response").getJSONArray("items");
-                    count = jsonArray.length();
-                    int id;
-                    for (int i = 0; i < jsonArray.length(); i++) {
-                        id = jsonArray.getJSONObject(i).getInt("id");
-                        favesId.add(id);
-                    }
-                    wait = false;
-                } catch (JSONException ex) {
-                    //
-                }
-            }
-
-            @Override public void onError(VKError error) {
-                super.onError(error);
-                Toast.makeText(MainActivity.this, "Проблема при загрузке данных", Toast.LENGTH_SHORT).show();
-            }
-        };
-    }
-
-    public List<Integer> getFavesId() {
-        return favesId;
-    }
 }

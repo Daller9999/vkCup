@@ -47,7 +47,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
     </androidx.cardview.widget.CardView>
-    <com.sunplacestudio.vkcupvideoqr.Fragment.EditViewVideo
+    <com.sunplacestudio.vkcupvideoqr.Fragment.EditVideoView
         app:layout_constraintBottom_toBottomOf="@id/cardView"
         app:layout_constraintTop_toTopOf="@id/cardView"
         app:layout_constraintRight_toRightOf="parent"
