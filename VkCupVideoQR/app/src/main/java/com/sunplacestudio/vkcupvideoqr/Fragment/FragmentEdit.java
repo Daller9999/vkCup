@@ -1,45 +1,44 @@
 package com.sunplacestudio.vkcupvideoqr.Fragment;
 
+import android.annotation.TargetApi;
+import android.content.Context;
 import android.graphics.Bitmap;
+import android.media.MediaCodec;
+import android.media.MediaExtractor;
+import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
-import android.media.MediaPlayer;
+import android.media.MediaMuxer;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.MediaController;
 import android.widget.Toast;
 import android.widget.VideoView;
 
-
-import com.coremedia.iso.boxes.Container;
-import com.googlecode.mp4parser.authoring.Movie;
-import com.googlecode.mp4parser.authoring.Track;
-import com.googlecode.mp4parser.authoring.builder.DefaultMp4Builder;
-import com.googlecode.mp4parser.authoring.container.mp4.MovieCreator;
-import com.googlecode.mp4parser.authoring.tracks.AppendTrack;
-import com.googlecode.mp4parser.authoring.tracks.CroppedTrack;
 import com.sunplacestudio.vkcupvideoqr.MainActivity;
 import com.sunplacestudio.vkcupvideoqr.R;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.channels.FileChannel;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static com.sunplacestudio.vkcupvideoqr.MainActivity.LOG_TAG;
 import static com.sunplacestudio.vkcupvideoqr.MainActivity.getDp;
 
 public class FragmentEdit extends Fragment {
@@ -111,8 +110,14 @@ public class FragmentEdit extends Fragment {
 
         Button buttonSave = view.findViewById(R.id.buttonSaveVideo);
         buttonSave.setOnClickListener((v) -> {
+            // cropVideoMasyukiSuda();
             try {
-                cropVideo();
+                int start = (int) (videoStart / 1000L);
+                int end = (int) (videoEnd / 1000L);
+                String path = getVideoFilePath(getContext());
+                String pathFrom = fileEdit.getPath();
+                // cropVideo();
+                genVideoUsingMuxer(pathFrom, path, start, end, isSound, true);
             } catch (IOException ex) {
                 //
             }
@@ -159,87 +164,118 @@ public class FragmentEdit extends Fragment {
         // loadImages();
     }
 
-    private void cropVideo() throws IOException {
-        Movie movie = MovieCreator.build(fileEdit.getPath());
-        List<Track> tracks = movie.getTracks();
-        movie.setTracks(new LinkedList<Track>());
 
-        double startTime = videoStart;
-        double endTime = videoEnd;
-
-        /*for (Track track : tracks) {
-            if (track.getSyncSamples() != null && track.getSyncSamples().length > 0) {
-                startTime = correctTimeToSyncSample(track, startTime, false);
-                endTime = correctTimeToSyncSample(track, endTime, true);
-            }
-        }*/
-
-        for (Track track : tracks) {
-            long currentSample = 0;
-            double currentTime = 0;
-            double lastTime = -1;
-            long startSample1 = -1;
-            long endSample1 = -1;
-
-            for (int i = 0; i < track.getSampleDurations().length; i++) {
-                long delta = track.getSampleDurations()[i];
-
-
-                if (currentTime > lastTime && currentTime <= startTime) {
-                    // current sample is still before the new starttime
-                    startSample1 = currentSample;
-                }
-                if (currentTime > lastTime && currentTime <= endTime) {
-                    // current sample is after the new start time and still before the new endtime
-                    endSample1 = currentSample;
-                }
-                lastTime = currentTime;
-                currentTime += (double) delta / (double) track.getTrackMetaData().getTimescale();
-                currentSample++;
-            }
-            movie.addTrack(new AppendTrack(new CroppedTrack(track, startSample1, endSample1)));
-        }
-        Container out = new DefaultMp4Builder().build(movie);
-        FileOutputStream fos = new FileOutputStream(fileEdit.getPath());
-        FileChannel fc = fos.getChannel();
-        out.writeContainer(fc);
-
-        fc.close();
-        fos.close();
-        Toast.makeText(getContext(), "Video saved", Toast.LENGTH_SHORT).show();
-        File file = new File("cropVideoNow.mp4");
-        /*long start3 = System.currentTimeMillis();
-        System.err.println("Building IsoFile took : " + (start2 - start1) + "ms");
-        System.err.println("Writing IsoFile took  : " + (start3 - start2) + "ms");
-        System.err.println("Writing IsoFile speed : " + (new File(String.format("output-%f-%f--%f-%f.mp4", startTime1, endTime1*/
+    private String getVideoFilePath(Context context) {
+        final File dir = context.getExternalFilesDir(null);
+        return (dir == null ? "" : (dir.getAbsolutePath() + "/")) + "videoCropAt" + getTime() + ".mp4";
     }
 
-    private static double correctTimeToSyncSample(Track track, double cutHere, boolean next) {
-        double[] timeOfSyncSamples = new double[track.getSyncSamples().length];
-        long currentSample = 0;
-        double currentTime = 0;
-        for (int i = 0; i < track.getSampleDurations().length; i++) {
-            long delta = track.getSampleDurations()[i];
+    public static String getTime() {
+        return new SimpleDateFormat("HH_mm_ss", Locale.getDefault()).format(new Date());
+    }
 
-            if (Arrays.binarySearch(track.getSyncSamples(), currentSample + 1) >= 0) {
-                // samples always start with 1 but we start with zero therefore +1
-                timeOfSyncSamples[Arrays.binarySearch(track.getSyncSamples(), currentSample + 1)] = currentTime;
-            }
-            currentTime += (double) delta / (double) track.getTrackMetaData().getTimescale();
-            currentSample++;
+    private static final int DEFAULT_BUFFER_SIZE = 1024 * 1024;
 
-        }
-        double previous = 0;
-        for (double timeOfSyncSample : timeOfSyncSamples) {
-            if (timeOfSyncSample > cutHere) {
-                if (next) {
-                    return timeOfSyncSample;
-                } else {
-                    return previous;
+    /**
+     * @param srcPath  the path of source video file.
+     * @param dstPath  the path of destination video file.
+     * @param startMs  starting time in milliseconds for trimming. Set to
+     *                 negative if starting from beginning.
+     * @param endMs    end time for trimming in milliseconds. Set to negative if
+     *                 no trimming at the end.
+     * @param useAudio true if keep the audio track from the source.
+     * @param useVideo true if keep the video track from the source.
+     */
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    private void genVideoUsingMuxer(String srcPath, String dstPath, int startMs, int endMs, boolean useAudio, boolean useVideo) throws IOException {
+        // Set up MediaExtractor to read from the source.
+        MediaExtractor extractor = new MediaExtractor();
+        extractor.setDataSource(srcPath);
+        int trackCount = extractor.getTrackCount();
+        // Set up MediaMuxer for the destination.
+        MediaMuxer muxer;
+        muxer = new MediaMuxer(dstPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+        // Set up the tracks and retrieve the max buffer size for selected
+        // tracks.
+        HashMap<Integer, Integer> indexMap = new HashMap<>(trackCount);
+        int bufferSize = -1;
+        for (int i = 0; i < trackCount; i++) {
+            MediaFormat format = extractor.getTrackFormat(i);
+            String mime = format.getString(MediaFormat.KEY_MIME);
+            boolean selectCurrentTrack = false;
+            if (mime.startsWith("audio/") && useAudio)
+                selectCurrentTrack = true;
+            else if (mime.startsWith("video/") && useVideo)
+                selectCurrentTrack = true;
+
+            if (selectCurrentTrack) {
+                extractor.selectTrack(i);
+                int dstIndex = muxer.addTrack(format);
+                indexMap.put(i, dstIndex);
+                if (format.containsKey(MediaFormat.KEY_MAX_INPUT_SIZE)) {
+                    int newSize = format.getInteger(MediaFormat.KEY_MAX_INPUT_SIZE);
+                    bufferSize = newSize > bufferSize ? newSize : bufferSize;
                 }
             }
-            previous = timeOfSyncSample;
         }
-        return timeOfSyncSamples[timeOfSyncSamples.length - 1];
+        if (bufferSize < 0) {
+            bufferSize = DEFAULT_BUFFER_SIZE;
+        }
+        // Set up the orientation and starting time for extractor.
+        MediaMetadataRetriever retrieverSrc = new MediaMetadataRetriever();
+        retrieverSrc.setDataSource(srcPath);
+        String degreesString = retrieverSrc.extractMetadata(
+                MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
+        if (degreesString != null) {
+            int degrees = Integer.parseInt(degreesString);
+            if (degrees >= 0) {
+                muxer.setOrientationHint(degrees);
+            }
+        }
+        if (startMs > 0) {
+            extractor.seekTo(startMs * 1000, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+        }
+        // Copy the samples from MediaExtractor to MediaMuxer. We will loop
+        // for copying each sample and stop when we get to the end of the source
+        // file or exceed the end time of the trimming.
+        int offset = 0;
+        int trackIndex = -1;
+        ByteBuffer dstBuf = ByteBuffer.allocate(bufferSize);
+        MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
+        try {
+            muxer.start();
+            while (true) {
+                bufferInfo.offset = offset;
+                bufferInfo.size = extractor.readSampleData(dstBuf, offset);
+                if (bufferInfo.size < 0) {
+                    Log.i(LOG_TAG, "Saw input EOS.");
+                    bufferInfo.size = 0;
+                    break;
+                } else {
+                    bufferInfo.presentationTimeUs = extractor.getSampleTime();
+                    if (endMs > 0 && bufferInfo.presentationTimeUs > (endMs * 1000)) {
+                        Log.i(LOG_TAG, "The current sample is over the trim end time.");
+                        break;
+                    } else {
+                        bufferInfo.flags = extractor.getSampleFlags();
+                        trackIndex = extractor.getSampleTrackIndex();
+                        muxer.writeSampleData(indexMap.get(trackIndex), dstBuf, bufferInfo);
+                        extractor.advance();
+                    }
+                }
+            }
+            muxer.stop();
+
+            //deleting the old file
+            // File file = new File(srcPath);
+            // File file = new File(srcPath);
+            // file.delete();
+        } catch (IllegalStateException e) {
+            // Swallow the exception due to malformed source.
+            Log.i(LOG_TAG, "The source video file is malformed");
+        } finally {
+            muxer.release();
+        }
+        Toast.makeText(getContext(), "Видео сохранено", Toast.LENGTH_SHORT).show();
     }
 }
