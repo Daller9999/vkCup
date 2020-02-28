@@ -4,7 +4,6 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
@@ -18,7 +17,6 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.MediaRecorder;
 import android.os.Build;
-import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.util.Size;
@@ -31,7 +29,6 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -46,56 +43,23 @@ public class CameraService {
     private CameraCaptureSession mCaptureSession;
     private CameraManager cameraManager;
     private AutoFitTextureView textureView;
-    private int type;
     private Display display;
     private MediaRecorder mediaRecorder = new MediaRecorder();
-
-    public static final int FRONT = 0;
-    public static final int BACK = 1;
 
     private Size mVideoSize;
     private Size mPreviewSize;
 
-    private int orgPreviewWidth;
-    private int orgPreviewHeight;
+    private File fileOutput;
+    private CaptureRequest.Builder mPreviewBuilder;
+    private boolean flashMode = false;
 
-    public CameraService(String cameraID, AutoFitTextureView textureView, int type, Activity activity) {
+    public boolean getFlashMode() { return flashMode; }
+
+    public CameraService(String cameraID, AutoFitTextureView textureView, Activity activity) {
         this.cameraManager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);;
         this.cameraId = cameraID;
         this.textureView = textureView;
-        this.type = type;
-
-        try {
-            StreamConfigurationMap configurationMap = cameraManager.getCameraCharacteristics(cameraId).get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-            Size[] sizesJPEG = configurationMap.getOutputSizes(ImageFormat.JPEG);
-
-            orgPreviewWidth = sizesJPEG[0].getWidth();
-            orgPreviewHeight = sizesJPEG[1].getHeight();
-        } catch (CameraAccessException ex) {
-            //
-        }
-
         display = activity.getWindowManager().getDefaultDisplay();
-    }
-
-    public int getType() { return type; }
-
-    public boolean isOpen() {
-        return cameraDevice != null;
-    }
-
-    public void openCamera(Context context) {
-        try {
-            if (Build.VERSION.SDK_INT >= 23 && context.checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
-                cameraManager.openCamera(cameraId, stateCallbackCamera, null);
-            else
-                cameraManager.openCamera(cameraId, stateCallbackCamera, null);
-            textureView.setSurfaceTextureListener(surfaceTextureListener);
-            transformImage(orgPreviewWidth, orgPreviewHeight);
-            // updateTextureMatrix(orgPreviewWidth, orgPreviewHeight);
-        } catch (CameraAccessException ex) {
-            //
-        }
     }
 
     private static Size chooseVideoSize4and3(Size[] choices) {
@@ -113,49 +77,25 @@ public class CameraService {
         return choices[choices.length - 1];
     }
 
-    /*private static Size chooseOptimalSize(Size[] choices, int width, int height, Size aspectRatio) {
-        List<Size> bigEnough = new ArrayList<>();
-        int w = aspectRatio.getWidth();
-        int h = aspectRatio.getHeight();
-        for (Size option : choices) {
-            if (option.getHeight() == option.getWidth() * h / w && option.getWidth() >= width && option.getHeight() >= height)
-                bigEnough.add(option);
-        }
-        return bigEnough.size() > 0 ? Collections.min(bigEnough, new CompareSizesByArea()) : choices[0];
-    }*/
 
     private static Size chooseOptimalSize(Size[] choices, int width, int height, Size aspectRatio) {
-        // Collect the supported resolutions that are at least as big as the preview Surface
         List<Size> bigEnough = new ArrayList<Size>();
         int w = aspectRatio.getWidth();
         int h = aspectRatio.getHeight();
         double ratio = (double) h / w;
         for (Size option : choices) {
             double optionRatio = (double) option.getHeight() / option.getWidth();
-            if (ratio == optionRatio) {
+            if (ratio == optionRatio)
                 bigEnough.add(option);
-            }
         }
-
-        // Pick the smallest of those, assuming we found any
-        if (bigEnough.size() > 0) {
-            return Collections.min(bigEnough, new CompareSizesByArea());
-        } else {
-            Log.e(LOG_TAG, "Couldn't find any suitable preview size");
-            return choices[1];
-        }
+        return bigEnough.size() > 0 ? Collections.min(bigEnough, new CompareSizesByArea()) : choices[1];
     }
 
     static class CompareSizesByArea implements Comparator<Size> {
-
-        @Override
-        public int compare(Size lhs, Size rhs) {
-            // We cast here to ensure the multiplications won't overflow
+        @Override public int compare(Size lhs, Size rhs) {
             return Long.signum((long) lhs.getWidth() * lhs.getHeight() - (long) rhs.getWidth() * rhs.getHeight());
         }
-
     }
-
 
     public void openCamera(Context context, int width, int height) {
         textureView.setSurfaceTextureListener(surfaceTextureListener);
@@ -163,7 +103,6 @@ public class CameraService {
             CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(cameraId);
             StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
 
-            // mVideoSize = chooseVideoSize4and3(map.getOutputSizes(MediaRecorder.class));
             mVideoSize = chooseVideoSizeFullScreen(map.getOutputSizes(MediaRecorder.class));
             mPreviewSize = chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class), width, height, mVideoSize);
             mPreviewSize = mVideoSize;
@@ -176,7 +115,6 @@ public class CameraService {
                 cameraManager.openCamera(cameraId, stateCallbackCamera, null);
             else
                 cameraManager.openCamera(cameraId, stateCallbackCamera, null);
-            // cameraManager.openCamera(cameraId, stateCallbackCamera, null);
         } catch (CameraAccessException e) {
             //
         } catch (NullPointerException e) {
@@ -204,12 +142,9 @@ public class CameraService {
 
     private TextureView.SurfaceTextureListener surfaceTextureListener = new TextureView.SurfaceTextureListener() {
         @Override public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int i, int i1) {}
-        @Override
-        public void onSurfaceTextureSizeChanged(SurfaceTexture surfaceTexture, int width, int height) {
+        @Override public void onSurfaceTextureSizeChanged(SurfaceTexture surfaceTexture, int width, int height) {
             configureTransform(width, height);
-            // transformImage(width, height);
         }
-
         @Override public boolean onSurfaceTextureDestroyed(SurfaceTexture surfaceTexture) { return false; }
         @Override public void onSurfaceTextureUpdated(SurfaceTexture surfaceTexture) {}
     };
@@ -230,7 +165,6 @@ public class CameraService {
         }
     };
 
-
     public void closeCamera() {
         if (cameraDevice != null) {
             cameraDevice.close();
@@ -248,9 +182,7 @@ public class CameraService {
             Surface previewSurface = new Surface(texture);
             mPreviewBuilder.addTarget(previewSurface);
 
-            cameraDevice.createCaptureSession(Collections.singletonList(previewSurface),
-                    new CameraCaptureSession.StateCallback() {
-
+            cameraDevice.createCaptureSession(Collections.singletonList(previewSurface), new CameraCaptureSession.StateCallback() {
                         @Override
                         public void onConfigured(@NonNull CameraCaptureSession session) {
                             mCaptureSession = session;
@@ -270,30 +202,6 @@ public class CameraService {
         }
     }
 
-
-    private void transformImage(int width, int height)
-    {
-        try {
-            Matrix matrix = new Matrix();
-            int rotation = display.getRotation();
-            RectF textureRectF = new RectF(0, 0, width, height);
-            RectF previewRectF = new RectF(0, 0, textureView.getHeight(), textureView.getWidth());
-            float centerX = textureRectF.centerX();
-            float centerY = textureRectF.centerY();
-            if (rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270) {
-                previewRectF.offset(centerX - previewRectF.centerX(), centerY - previewRectF.centerY());
-                matrix.setRectToRect(textureRectF, previewRectF, Matrix.ScaleToFit.FILL);
-                float scale = Math.max((float) width / width, (float) height / width);
-                matrix.postScale(scale, scale, centerX, centerY);
-                matrix.postRotate(90 * (rotation - 2), centerX, centerY);
-            }
-            textureView.setTransform(matrix);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
-
     private static final SparseIntArray DEFAULT_ORIENTATIONS = new SparseIntArray();
     static {
         DEFAULT_ORIENTATIONS.append(Surface.ROTATION_0, 90);
@@ -302,28 +210,20 @@ public class CameraService {
         DEFAULT_ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
 
-    //  /storage/emulated/0/Android/data/com.sunplacestudio.vkcupvideoqr/files/Thu_Feb_27_17:16:53_GMT+03:00_2020.mp4
-
     private void setUpMediaRecorder(Context context) throws IOException {
-        mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
-        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-
-
-        /*File file = Environment.getExternalStorageDirectory();
-        File files = new File(file.getPath() + "/" + "VkVideo");
-        files.mkdir();
-        String fullPath = files.getPath() + "/" + Calendar.getInstance().getTime().toString() + ".mp4";
-        fullPath = fullPath.replace(" ", "_");*/
         String fullPath = getVideoFilePath(context);
         fileOutput = new File(fullPath);
 
         mediaRecorder.setOutputFile(fullPath);
+        mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
+        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
         mediaRecorder.setVideoEncodingBitRate(10000000);
         mediaRecorder.setVideoFrameRate(30);
         mediaRecorder.setVideoSize(mVideoSize.getWidth(), mVideoSize.getHeight());
         mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
         mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+
         int rotation = display.getRotation();
         mediaRecorder.setOrientationHint(DEFAULT_ORIENTATIONS.get(rotation));
         mediaRecorder.prepare();
@@ -338,11 +238,10 @@ public class CameraService {
         return new SimpleDateFormat("HH_mm_ss", Locale.getDefault()).format(new Date());
     }
 
-    private File fileOutput;
 
-    private CaptureRequest.Builder mPreviewBuilder;
     public void startRecordingVideo(Context context) {
         try {
+            flashMode = true;
             closePreviewSession();
             setUpMediaRecorder(context);
 
@@ -389,11 +288,16 @@ public class CameraService {
         }
     }
 
-    public File stopRecordingVideo() {
+    public void setLightMode() {
+        flashMode = !flashMode;
+        mPreviewBuilder.set(CaptureRequest.FLASH_MODE, flashMode ? CaptureRequest.FLASH_MODE_TORCH : CaptureRequest.FLASH_MODE_OFF);
+        if (flashMode)
+            mPreviewBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+    }
 
+    public File stopRecordingVideo() {
         mediaRecorder.stop();
         mediaRecorder.reset();
-
         return fileOutput;
     }
 

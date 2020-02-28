@@ -22,6 +22,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
 
@@ -31,6 +32,7 @@ import com.sunplacestudio.vkcupvideoqr.R;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -56,15 +58,30 @@ public class FragmentEdit extends Fragment {
 
     private long videoStart;
     private long videoEnd;
-    private long currentFrame;
 
     private boolean isSound = true;
+
+    public static String formatTime(int timeMs) {
+        int sec = timeMs / 1000;
+        int min = sec / 60;
+
+        int fsec = sec % 60;
+        int fmin = min % 60;
+        int fhour = min / 60;
+
+        return String.format("%02d:%02d:%02d", fhour, fmin, fsec);
+    }
 
     @Nullable
     @Override public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_edit_video, container, false);
         videoView = view.findViewById(R.id.videoView);
         layout = view.findViewById(R.id.linearLayoutBitmaps);
+
+        TextView textViewCurrentTime = view.findViewById(R.id.textViewCurrentTime);
+        textViewCurrentTime.setText("00:00:01");
+        TextView textViewLastTime = view.findViewById(R.id.textViewLastTime);
+
         EditViewVideo editViewVideo = view.findViewById(R.id.frameView);
         editViewVideo.setOnPercentSwipeListener(new EditViewVideo.OnPercentSwipeListener() {
             @Override public void onMiddle(int percent) {
@@ -72,6 +89,11 @@ public class FragmentEdit extends Fragment {
 
                 int mills = normalDuration * percent / 100;
                 videoView.seekTo(mills);
+
+                String text1 = formatTime(mills);
+                String text2 = "-" + formatTime(normalDuration - mills);
+                textViewCurrentTime.setText(text1);
+                textViewLastTime.setText(text2);
             }
 
             @Override public void onLeft(int percent) {
@@ -89,6 +111,7 @@ public class FragmentEdit extends Fragment {
         String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
         normalDuration = Integer.valueOf(time);
         duration = Long.valueOf(time) * 1000L;
+        textViewLastTime.setText(formatTime(normalDuration));
 
         layout.setOnSizeListener((w, h) -> {
             width = w;
@@ -105,19 +128,17 @@ public class FragmentEdit extends Fragment {
         Button buttonClose = view.findViewById(R.id.buttonCancelVideo);
         buttonClose.setOnClickListener((v) -> {
             if (getActivity() != null)
-                ((MainActivity) getActivity()).popBackStack();
+                ((MainActivity) getActivity()).loadCameraFragment();
         });
 
         Button buttonSave = view.findViewById(R.id.buttonSaveVideo);
         buttonSave.setOnClickListener((v) -> {
-            // cropVideoMasyukiSuda();
             try {
                 int start = (int) (videoStart / 1000L);
                 int end = (int) (videoEnd / 1000L);
-                String path = getVideoFilePath(getContext());
+                String pathTo = getVideoFilePath(getContext());
                 String pathFrom = fileEdit.getPath();
-                // cropVideo();
-                genVideoUsingMuxer(pathFrom, path, start, end, isSound, true);
+                genVideoUsingMuxer(pathFrom, pathTo, start, end, isSound);
             } catch (IOException ex) {
                 //
             }
@@ -131,6 +152,7 @@ public class FragmentEdit extends Fragment {
         widthConst = getDp(getContext(),30);
         long count = width / widthConst;
         final long step = duration / count;
+        videoView.seekTo(1000);
 
         executorService.execute(() -> {
             for (long i = 0; i < duration; i += step) {
@@ -158,12 +180,6 @@ public class FragmentEdit extends Fragment {
         this.fileEdit = fileEdit;
     }
 
-    @Override public void onResume() {
-        super.onResume();
-
-        // loadImages();
-    }
-
 
     private String getVideoFilePath(Context context) {
         final File dir = context.getExternalFilesDir(null);
@@ -184,10 +200,9 @@ public class FragmentEdit extends Fragment {
      * @param endMs    end time for trimming in milliseconds. Set to negative if
      *                 no trimming at the end.
      * @param useAudio true if keep the audio track from the source.
-     * @param useVideo true if keep the video track from the source.
      */
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    private void genVideoUsingMuxer(String srcPath, String dstPath, int startMs, int endMs, boolean useAudio, boolean useVideo) throws IOException {
+    private void genVideoUsingMuxer(String srcPath, String dstPath, int startMs, int endMs, boolean useAudio) throws IOException {
         // Set up MediaExtractor to read from the source.
         MediaExtractor extractor = new MediaExtractor();
         extractor.setDataSource(srcPath);
@@ -205,7 +220,7 @@ public class FragmentEdit extends Fragment {
             boolean selectCurrentTrack = false;
             if (mime.startsWith("audio/") && useAudio)
                 selectCurrentTrack = true;
-            else if (mime.startsWith("video/") && useVideo)
+            else if (mime.startsWith("video/"))
                 selectCurrentTrack = true;
 
             if (selectCurrentTrack) {
@@ -265,13 +280,7 @@ public class FragmentEdit extends Fragment {
                 }
             }
             muxer.stop();
-
-            //deleting the old file
-            // File file = new File(srcPath);
-            // File file = new File(srcPath);
-            // file.delete();
         } catch (IllegalStateException e) {
-            // Swallow the exception due to malformed source.
             Log.i(LOG_TAG, "The source video file is malformed");
         } finally {
             muxer.release();

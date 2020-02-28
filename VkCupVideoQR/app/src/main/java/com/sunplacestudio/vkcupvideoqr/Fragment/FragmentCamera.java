@@ -1,18 +1,15 @@
 package com.sunplacestudio.vkcupvideoqr.Fragment;
 
 import android.content.Context;
-import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
-import android.hardware.camera2.params.StreamConfigurationMap;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
-import android.util.Size;
 import android.view.LayoutInflater;
 import android.view.TextureView;
 import android.view.View;
@@ -29,8 +26,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.sunplacestudio.vkcupvideoqr.CameraService.BACK;
-import static com.sunplacestudio.vkcupvideoqr.CameraService.FRONT;
 import static com.sunplacestudio.vkcupvideoqr.MainActivity.LOG_TAG;
 
 public class FragmentCamera extends Fragment {
@@ -65,18 +60,17 @@ public class FragmentCamera extends Fragment {
 
         CameraManager cameraManager = (CameraManager) view.getContext().getSystemService(Context.CAMERA_SERVICE);
         try {
-            // выводим информацию по камере
             for (String cameraID : cameraManager.getCameraIdList()) {
 
                 CameraCharacteristics cameraCharacteristics = cameraManager.getCameraCharacteristics(cameraID);
                 int typeFacing = cameraCharacteristics.get(CameraCharacteristics.LENS_FACING);
 
                 if (typeFacing ==  CameraCharacteristics.LENS_FACING_FRONT)
-                    cameraIdsFront.add(new CameraService(cameraID, autoFitTextureView, FRONT, getActivity()));
+                    cameraIdsFront.add(new CameraService(cameraID, autoFitTextureView, getActivity()));
                 else if (typeFacing ==  CameraCharacteristics.LENS_FACING_BACK)
-                    cameraIdsBack.add(new CameraService(cameraID, autoFitTextureView, BACK, getActivity()));
+                    cameraIdsBack.add(new CameraService(cameraID, autoFitTextureView, getActivity()));
 
-                StreamConfigurationMap configurationMap = cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+                /*StreamConfigurationMap configurationMap = cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
                 Size[] sizesJPEG = configurationMap.getOutputSizes(ImageFormat.JPEG);
                 if (sizesJPEG != null) {
                     String sT = typeFacing == CameraCharacteristics.LENS_FACING_BACK ? "BACK" : "FRONT";
@@ -86,7 +80,7 @@ public class FragmentCamera extends Fragment {
                     }
                 }  else {
                     Log.i(LOG_TAG, "camera don`t support JPEG");
-                }
+                }*/
             }
         } catch(CameraAccessException e){
             Log.e(LOG_TAG, e.getMessage());
@@ -119,11 +113,15 @@ public class FragmentCamera extends Fragment {
                     File file = cameraServiceCurrent.stopRecordingVideo();
                     if (getActivity() != null)
                         ((MainActivity) getActivity()).showEditVideoFragment(file);
-                    // Toast.makeText(getContext(), "Видео сохранено в папку VkVideo", Toast.LENGTH_SHORT).show();
                 }
                 isMakeVideo = !isMakeVideo;
             }
+        });
 
+        Button buttonFlash = view.findViewById(R.id.buttonFlash);
+        buttonFlash.setOnClickListener((v) -> {
+            buttonFlash.setBackgroundResource(cameraServiceCurrent.getFlashMode() ? R.mipmap.ic_flash_shadow_48 : R.mipmap.ic_flash_off_outline_shadow_48);
+            cameraServiceCurrent.setLightMode();
         });
 
         return view;

@@ -25,11 +25,7 @@ import com.sunplacestudio.vkcupvideoqr.Fragment.FragmentCamera;
 import com.sunplacestudio.vkcupvideoqr.Fragment.FragmentEdit;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
-import static com.sunplacestudio.vkcupvideoqr.CameraService.BACK;
-import static com.sunplacestudio.vkcupvideoqr.CameraService.FRONT;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -45,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
                 Manifest.permission.INTERNET,
                 Manifest.permission.CAMERA,
-                Manifest.permission.RECORD_AUDIO
+                Manifest.permission.RECORD_AUDIO,
         };
         if (Build.VERSION.SDK_INT >= 23) {
             requestPermissions(permissions, 1);
@@ -67,14 +63,14 @@ public class MainActivity extends AppCompatActivity {
                         | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
     }
 
-    public void popBackStack() {
-        getSupportFragmentManager().popBackStack();
+    public void loadCameraFragment() {
+        getSupportFragmentManager().beginTransaction().replace(R.id.container, new FragmentCamera()).commit();
     }
 
     public void showEditVideoFragment(File file) {
         FragmentEdit fragmentEdit = new FragmentEdit();
         fragmentEdit.setFileEdit(file);
-        getSupportFragmentManager().beginTransaction().replace(R.id.container, fragmentEdit).addToBackStack(FragmentEdit.class.getName()).commit();
+        getSupportFragmentManager().beginTransaction().replace(R.id.container, fragmentEdit).commit();
     }
 
     public static int getDp(Context context, int len) { return (int) (len * context.getResources().getDisplayMetrics().density + 0.5f); }
