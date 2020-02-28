@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <View
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/videoView"
+
+        android:background="@color/colorBlack"
+        android:id="@+id/viewUp"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"/>
+
+    <VideoView
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+
+        android:id="@+id/videoView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <View
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/videoView"
+
+        android:background="@color/colorBlack"
+        android:id="@+id/viewDown"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"/>
+
+    <android.support.v7.widget.CardView
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:cardCornerRadius="5dp"
+
+        android:id="@+id/cardView"
+        android:layout_marginRight="15dp"
+        android:layout_marginLeft="15dp"
+        android:layout_marginBottom="44dp"
+        android:layout_width="match_parent"
+        android:layout_height="54dp">
+        <com.sunplacestudio.vkcupvideoqrcode.Fragment.CustomLinearLayout
+            android:id="@+id/linearLayoutBitmaps"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+    </android.support.v7.widget.CardView>
+    <com.sunplacestudio.vkcupvideoqrcode.Fragment.EditVideoView
+        app:layout_constraintBottom_toBottomOf="@id/cardView"
+        app:layout_constraintTop_toTopOf="@id/cardView"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+
+        android:id="@+id/frameView"
+        android:layout_marginRight="14dp"
+        android:layout_marginLeft="14dp"
+        android:elevation="3dp"
+        android:background="@drawable/video_edit_background"
+        android:layout_width="0dp"
+        android:layout_height="56dp"/>
+    <com.sunplacestudio.vkcupvideoqrcode.Fragment.CustomImageView
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/frameView"
+
+        android:layout_marginStart="13dp"
+        android:elevation="4dp"
+        android:id="@+id/imageButtonArrow"
+        android:paddingBottom="5dp"
+        android:paddingTop="5dp"
+        android:backgroundTint="@color/colorRed"
+        android:src="@mipmap/ic_trim_knob"
+        android:layout_width="20dp"
+        android:layout_height="80dp" />
+    
+    <TextView
+        app:layout_constraintTop_toBottomOf="@id/frameView"
+        app:layout_constraintLeft_toLeftOf="@id/frameView"
+
+        android:id="@+id/textViewCurrentTime"
+        android:textColor="@color/colorWhite"
+        android:textSize="12sp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        app:layout_constraintTop_toBottomOf="@id/frameView"
+        app:layout_constraintRight_toRightOf="@id/frameView"
+
+        android:id="@+id/textViewLastTime"
+        android:textColor="@color/colorWhite"
+        android:textSize="12sp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <Button
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+
+        android:id="@+id/buttonCancelVideo"
+        android:layout_margin="8dp"
+        android:background="@mipmap/ic_cancel_shadow_48"
+        android:layout_width="48dp"
+        android:layout_height="48dp" />
+
+    <Button
+        app:layout_constraintRight_toLeftOf="@id/buttonSaveVideo"
+        app:layout_constraintTop_toTopOf="parent"
+
+        android:layout_marginTop="8dp"
+        android:id="@+id/buttonSoundVideo"
+        android:background="@mipmap/ic_sound_on_shadow_48"
+        android:layout_width="48dp"
+        android:layout_height="48dp" />
+
+    <Button
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+
+        android:layout_margin="8dp"
+        android:id="@+id/buttonSaveVideo"
+        android:background="@mipmap/ic_download_shadow_48"
+        android:layout_width="48dp"
+        android:layout_height="48dp" />
+
+</android.support.constraint.ConstraintLayout>
