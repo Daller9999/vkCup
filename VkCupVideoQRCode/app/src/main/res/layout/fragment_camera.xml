@@ -13,7 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp" />
 
-    <com.sunplacestudio.vkcupvideoqrcode.AutoFitTextureView
+    <com.sunplacestudio.vkcupvideoqrcode.CustomComponents.CustomTextureView
         app:layout_constraintTop_toBottomOf="@id/viewUpBack"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -55,7 +55,7 @@
         android:layout_width="48dp"
         android:layout_height="48dp" />
 
-    <com.sunplacestudio.vkcupvideoqrcode.RoundButton
+    <com.sunplacestudio.vkcupvideoqrcode.CustomComponents.RoundButton
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -65,7 +65,7 @@
         android:layout_width="74dp"
         android:layout_height="74dp" />
 
-    <com.sunplacestudio.vkcupvideoqrcode.Fragment.ViewSqare
+    <com.sunplacestudio.vkcupvideoqrcode.CustomComponents.ViewSqare
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"

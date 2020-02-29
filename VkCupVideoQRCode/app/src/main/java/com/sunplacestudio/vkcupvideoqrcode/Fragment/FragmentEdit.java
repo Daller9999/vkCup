@@ -26,6 +26,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
 
+import com.sunplacestudio.vkcupvideoqrcode.CustomComponents.CustomImageView;
+import com.sunplacestudio.vkcupvideoqrcode.CustomComponents.CustomLinearLayout;
+import com.sunplacestudio.vkcupvideoqrcode.CustomComponents.EditVideoView;
 import com.sunplacestudio.vkcupvideoqrcode.MainActivity;
 import com.sunplacestudio.vkcupvideoqrcode.R;
 
@@ -286,5 +289,11 @@ public class FragmentEdit extends Fragment {
             muxer.release();
         }
         Toast.makeText(getContext(), "Видео сохранено по пути : " + dstPath, Toast.LENGTH_SHORT).show();
+    }
+
+
+    @Override public void onDestroy() {
+        super.onDestroy();
+        fileEdit.delete();
     }
 }

@@ -1,4 +1,4 @@
-package com.sunplacestudio.vkcupvideoqrcode.Fragment;
+package com.sunplacestudio.vkcupvideoqrcode.CustomComponents;
 
 import android.content.Context;
 import android.support.v7.widget.AppCompatImageView;

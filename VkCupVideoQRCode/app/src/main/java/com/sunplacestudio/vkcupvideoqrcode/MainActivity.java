@@ -21,6 +21,10 @@ public class MainActivity extends AppCompatActivity {
 
     public static final String LOG_TAG = "mesUri";
 
+    private static final int FRAGMENT_CAMERA = 0;
+    private static final int FRAGMENT_EDIT_VIDEO = 1;
+    private int currentFragment;
+
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -53,10 +57,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void loadCameraFragment() {
+        currentFragment = FRAGMENT_CAMERA;
         getSupportFragmentManager().beginTransaction().replace(R.id.container, new FragmentCamera()).commit();
     }
 
     public void showEditVideoFragment(File file) {
+        currentFragment = FRAGMENT_EDIT_VIDEO;
         FragmentEdit fragmentEdit = new FragmentEdit();
         fragmentEdit.setFileEdit(file);
         getSupportFragmentManager().beginTransaction().replace(R.id.container, fragmentEdit).commit();
@@ -66,7 +72,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
-        // getWindow().getDecorView().setSystemUiVisibility(flagsFullScreen);
         this.getWindow().getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                         | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
@@ -76,5 +81,15 @@ public class MainActivity extends AppCompatActivity {
                         | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
     }
 
+    @Override public void onBackPressed() {
+        super.onBackPressed();
+        if (currentFragment == FRAGMENT_EDIT_VIDEO)
+            loadCameraFragment();
+        else if (currentFragment == FRAGMENT_CAMERA) {
+            moveTaskToBack(true);
+            finish();
+        }
+
+    }
 
 }

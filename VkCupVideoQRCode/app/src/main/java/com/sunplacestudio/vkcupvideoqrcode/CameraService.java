@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
@@ -21,6 +22,7 @@ import android.os.Build;
 
 import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
@@ -35,6 +37,7 @@ import com.google.zxing.RGBLuminanceSource;
 import com.google.zxing.Reader;
 import com.google.zxing.Result;
 import com.google.zxing.common.HybridBinarizer;
+import com.sunplacestudio.vkcupvideoqrcode.CustomComponents.CustomTextureView;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,7 +57,7 @@ public class CameraService {
     private CameraDevice cameraDevice = null;
     private CameraCaptureSession mCaptureSession;
     private CameraManager cameraManager;
-    private volatile AutoFitTextureView textureView;
+    private volatile CustomTextureView textureView;
     private Display display;
     private MediaRecorder mediaRecorder = new MediaRecorder();
 
@@ -68,9 +71,11 @@ public class CameraService {
     private boolean qrRun = true;
     private float maxZoom = 0;
 
+    private Rect rectZoom;
+
     public boolean getFlashMode() { return flashMode; }
 
-    public CameraService(String cameraID, AutoFitTextureView textureView, OnImageRecognizeListener onImageRecognizeListener, Activity activity) {
+    public CameraService(String cameraID, CustomTextureView textureView, OnImageRecognizeListener onImageRecognizeListener, Activity activity) {
         this.cameraManager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
         this.cameraId = cameraID;
         this.textureView = textureView;
@@ -118,7 +123,6 @@ public class CameraService {
 
             textureView.setAspectRatio(mPreviewSize.getHeight(), mPreviewSize.getWidth());
             configureTransform(width, height);
-            mediaRecorder = new MediaRecorder();
 
             if (Build.VERSION.SDK_INT >= 23 && context.checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
                 cameraManager.openCamera(cameraId, stateCallbackCamera, null);
@@ -185,7 +189,6 @@ public class CameraService {
 
     public String getCameraId() { return cameraId; }
 
-    private Handler handler = new Handler();
     private void startPreview() {
         try {
             closePreviewSession();
@@ -211,31 +214,34 @@ public class CameraService {
                         @Override public void onConfigureFailed(@NonNull CameraCaptureSession session) {
                             Log.e("mesUri", "failed to start camera");
                         }
-                    }, handler);
+                    }, null);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
     }
 
-    private Bitmap bitmap;
-
     private class ScanThread extends Thread {
-
         @Override public void run() {
             long start = System.currentTimeMillis();
+            int[] intArray;
+            Reader reader;
+            Result result;
+            LuminanceSource source;
+            BinaryBitmap bitmapBinary;
+
             while (qrRun) {
                 try {
                     if (System.currentTimeMillis() - start > 1000) {
                         Bitmap bitmap = takeBitmap();
                         if (bitmap != null) {
-                            int[] intArray = new int[bitmap.getWidth() * bitmap.getHeight()];
+                            intArray = new int[bitmap.getWidth() * bitmap.getHeight()];
                             bitmap.getPixels(intArray, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
 
-                            LuminanceSource source = new RGBLuminanceSource(bitmap.getWidth(), bitmap.getHeight(), intArray);
-                            BinaryBitmap bitmapBinary = new BinaryBitmap(new HybridBinarizer(source));
+                            source = new RGBLuminanceSource(bitmap.getWidth(), bitmap.getHeight(), intArray);
+                            bitmapBinary = new BinaryBitmap(new HybridBinarizer(source));
 
-                            Reader reader = new MultiFormatReader();
-                            Result result = reader.decode(bitmapBinary);
+                            reader = new MultiFormatReader();
+                            result = reader.decode(bitmapBinary);
                             String contents = result.getText();
 
                             handlerPost.post(() -> postRecognize(contents));
@@ -243,6 +249,7 @@ public class CameraService {
                         start = System.currentTimeMillis();
                     }
                 } catch (Exception ex) {
+                    start = System.currentTimeMillis();
                     // Log.e(LOG_TAG, "Recognize not found");
                     handlerPost.post(() -> postRecognize(null));
                 }
@@ -266,6 +273,45 @@ public class CameraService {
     }
 
 
+    public void setZoom(int percent) {
+        if (mCaptureSession == null) return;
+        try {
+            rectZoom = getZoomRect(maxZoom * percent / 100);
+            mPreviewBuilder.set(CaptureRequest.SCALER_CROP_REGION, rectZoom);
+            mCaptureSession.setRepeatingRequest(mPreviewBuilder.build(), null, null);
+            if (rectZoom != null)
+                Log.i(LOG_TAG, "rectZoom : " + rectZoom.toString());
+        } catch (CameraAccessException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private Rect getZoomRect(float zoomLevel) {
+        try {
+            CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(cameraId);
+            float maxZoom = (characteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM)) * 10;
+            Rect activeRect = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+            if((zoomLevel <= maxZoom) && (zoomLevel > 1)) {
+                int minW = (int) (activeRect.width() / maxZoom);
+                int minH = (int) (activeRect.height() / maxZoom);
+                int difW = activeRect.width() - minW;
+                int difH = activeRect.height() - minH;
+                int cropW = difW / 100 * (int) zoomLevel;
+                int cropH = difH / 100 * (int) zoomLevel;
+                cropW -= cropW & 3;
+                cropH -= cropH & 3;
+                return new Rect(cropW, cropH, activeRect.width() - cropW, activeRect.height() - cropH);
+            } else if(zoomLevel == 0) {
+                return new Rect(0, 0, activeRect.width(), activeRect.height());
+            }
+            return null;
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Error during camera init");
+            return null;
+        }
+    }
+
+
     private static final SparseIntArray DEFAULT_ORIENTATIONS = new SparseIntArray();
     static {
         DEFAULT_ORIENTATIONS.append(Surface.ROTATION_0, 90);
@@ -277,6 +323,8 @@ public class CameraService {
     private void setUpMediaRecorder(Context context) throws IOException {
         String fullPath = getVideoFilePath(context);
         fileOutput = new File(fullPath);
+
+        mediaRecorder = new MediaRecorder();
 
         mediaRecorder.setOutputFile(fullPath);
         mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
@@ -295,7 +343,7 @@ public class CameraService {
 
     private String getVideoFilePath(Context context) {
         final File dir = context.getExternalFilesDir(null);
-        return (dir == null ? "" : (dir.getAbsolutePath() + "/")) + "videoAt" + getTime() + ".mp4";
+        return (dir == null ? "" : (dir.getAbsolutePath() + "/")) + "videoAt" + System.currentTimeMillis() + ".mp4";
     }
 
     public static String getTime() {
@@ -322,6 +370,9 @@ public class CameraService {
             surfaces.add(recorderSurface);
             mPreviewBuilder.addTarget(recorderSurface);
 
+            if (rectZoom != null)
+                mPreviewBuilder.set(CaptureRequest.SCALER_CROP_REGION, rectZoom);
+
             cameraDevice.createCaptureSession(surfaces, new CameraCaptureSession.StateCallback() {
                 @Override public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
                     mCaptureSession = cameraCaptureSession;
@@ -335,8 +386,7 @@ public class CameraService {
                 }
 
                 @Override
-                public void onConfigureFailed(@NonNull CameraCaptureSession cameraCaptureSession) {
-                }
+                public void onConfigureFailed(@NonNull CameraCaptureSession cameraCaptureSession) {}
             }, null);
         } catch (CameraAccessException | IOException e) {
             e.printStackTrace();
@@ -359,8 +409,11 @@ public class CameraService {
     }
 
     public File stopRecordingVideo() {
+        closeCamera();
+
         mediaRecorder.stop();
         mediaRecorder.reset();
+        mediaRecorder = null;
         return fileOutput;
     }
 

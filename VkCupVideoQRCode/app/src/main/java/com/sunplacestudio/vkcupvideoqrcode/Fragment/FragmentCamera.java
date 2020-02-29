@@ -1,7 +1,6 @@
 package com.sunplacestudio.vkcupvideoqrcode.Fragment;
 
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
@@ -12,18 +11,20 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.SurfaceView;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.Toast;
 
-import com.sunplacestudio.vkcupvideoqrcode.AutoFitTextureView;
+import com.sunplacestudio.vkcupvideoqrcode.CustomComponents.CustomTextureView;
 import com.sunplacestudio.vkcupvideoqrcode.CameraService;
+import com.sunplacestudio.vkcupvideoqrcode.CustomComponents.ViewSqare;
 import com.sunplacestudio.vkcupvideoqrcode.MainActivity;
 import com.sunplacestudio.vkcupvideoqrcode.R;
-import com.sunplacestudio.vkcupvideoqrcode.RoundButton;
+import com.sunplacestudio.vkcupvideoqrcode.CustomComponents.RoundButton;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -35,14 +36,18 @@ public class FragmentCamera extends Fragment {
     private List<CameraService> cameraIdsFront = new ArrayList<>();
     private List<CameraService> cameraIdsBack = new ArrayList<>();
 
-    private AutoFitTextureView autoFitTextureView;
+    private CustomTextureView customTextureView;
     private boolean front = false;
     private boolean isMakeVideo = true;
     private int width;
     private ViewSqare viewFrame;
     private int height;
+    private boolean isLongTap = false;
 
     private CameraService cameraServiceCurrent = null;
+
+    private Animation animationIn;
+    private Animation animationOut;
 
     @Nullable
     @Override public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -50,8 +55,11 @@ public class FragmentCamera extends Fragment {
 
         viewFrame = view.findViewById(R.id.viewFrame);
 
-        autoFitTextureView = view.findViewById(R.id.videoView);
-        autoFitTextureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
+        animationIn = AnimationUtils.loadAnimation(view.getContext(), R.anim.anim_qr_in);
+        animationOut = AnimationUtils.loadAnimation(view.getContext(), R.anim.anim_qr_out);
+
+        customTextureView = view.findViewById(R.id.videoView);
+        customTextureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
             @Override public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int i, int i1) {
                 width = i;
                 height = i1;
@@ -71,9 +79,9 @@ public class FragmentCamera extends Fragment {
                 int typeFacing = cameraCharacteristics.get(CameraCharacteristics.LENS_FACING);
 
                 if (typeFacing ==  CameraCharacteristics.LENS_FACING_FRONT)
-                    cameraIdsFront.add(new CameraService(cameraID, autoFitTextureView, onImageRecognizeListener, getActivity()));
+                    cameraIdsFront.add(new CameraService(cameraID, customTextureView, onImageRecognizeListener, getActivity()));
                 else if (typeFacing ==  CameraCharacteristics.LENS_FACING_BACK)
-                    cameraIdsBack.add(new CameraService(cameraID, autoFitTextureView, onImageRecognizeListener, getActivity()));
+                    cameraIdsBack.add(new CameraService(cameraID, customTextureView, onImageRecognizeListener, getActivity()));
             }
         } catch(CameraAccessException e){
             Log.e(LOG_TAG, e.getMessage());
@@ -98,17 +106,17 @@ public class FragmentCamera extends Fragment {
         });
 
         RoundButton buttonVideo = view.findViewById(R.id.buttonVideo);
-        buttonVideo.setOnClickListener((v) -> {
-            if (cameraServiceCurrent != null) {
-                buttonVideo.setPressedButton(isMakeVideo);
+        buttonVideo.setOnLongTapRoundListener(new RoundButton.OnLongTapRoundListener() {
+            @Override public void onLongTap(int percent) {
+                if (cameraServiceCurrent != null)
+                    cameraServiceCurrent.setZoom(percent);
                 if (isMakeVideo)
-                    cameraServiceCurrent.startRecordingVideo(getContext());
-                else {
-                    File file = cameraServiceCurrent.stopRecordingVideo();
-                    if (getActivity() != null)
-                        ((MainActivity) getActivity()).showEditVideoFragment(file);
-                }
-                isMakeVideo = !isMakeVideo;
+                    setMakeVideo();
+            }
+
+            @Override public void onClick() {
+                if (cameraServiceCurrent != null)
+                    setMakeVideo();
             }
         });
 
@@ -121,13 +129,32 @@ public class FragmentCamera extends Fragment {
         return view;
     }
 
+    private void setMakeVideo() {
+        if (cameraServiceCurrent != null) {
+            if (isMakeVideo) {
+                isMakeVideo = false;
+                cameraServiceCurrent.startRecordingVideo(getContext());
+            } else {
+                File file = cameraServiceCurrent.stopRecordingVideo();
+                if (getActivity() != null)
+                    ((MainActivity) getActivity()).showEditVideoFragment(file);
+            }
+        }
+    }
+
     private long lastRecognize = 0;
     private CameraService.OnImageRecognizeListener onImageRecognizeListener = (text) -> {
-        if (text == null && System.currentTimeMillis() - lastRecognize > 3000)
-            viewFrame.setVisibility(View.GONE);
-        else if (text != null && System.currentTimeMillis() - lastRecognize > 2000) {
+        if (text == null && System.currentTimeMillis() - lastRecognize > 3000) {
+            if (viewFrame.getVisibility() == View.VISIBLE) {
+                viewFrame.startAnimation(animationOut);
+                viewFrame.setVisibility(View.GONE);
+            }
+        } else if (text != null && System.currentTimeMillis() - lastRecognize > 2000) {
             Toast.makeText(getContext(), "QR код : " + text, Toast.LENGTH_SHORT).show();
-            viewFrame.setVisibility(View.VISIBLE);
+            if (viewFrame.getVisibility() == View.GONE) {
+                viewFrame.startAnimation(animationIn);
+                viewFrame.setVisibility(View.VISIBLE);
+            }
             lastRecognize = System.currentTimeMillis();
         }
     };
