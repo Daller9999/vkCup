@@ -36,6 +36,10 @@ import static java.lang.Thread.sleep;
 
 public class MainActivity extends AppCompatActivity {
 
+    private int currentFragment;
+    private int FRAGMENT_MAIN = 0;
+    private int FRAGMENT_GOODS = 1;
+    private int FRAGMENT_PRODUCT = 2;
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -77,23 +81,38 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void loadFragmentMarketCityList() {
+        currentFragment = FRAGMENT_MAIN;
         getSupportFragmentManager().beginTransaction().replace(R.id.container, new FragmentMarket()).addToBackStack(FragmentMarket.class.getName()).commit();
     }
 
     public void loadFragmentMarketGoods(MarketInfo marketInfo) {
+        currentFragment = FRAGMENT_GOODS;
         FragmentMarketGoods fragmentMarket = new FragmentMarketGoods();
         fragmentMarket.setMarketInfo(marketInfo);
         getSupportFragmentManager().beginTransaction().replace(R.id.container, fragmentMarket).addToBackStack(FragmentMarketGoods.class.getName()).commit();
     }
 
     public void loadFragmentProductInfo(int id, ProductInfo productInfo) {
+        currentFragment = FRAGMENT_PRODUCT;
         FragmentProductInfo fragmentProductInfo = new FragmentProductInfo();
         fragmentProductInfo.setProductInfo(id, productInfo);
         getSupportFragmentManager().beginTransaction().replace(R.id.container, fragmentProductInfo).addToBackStack(FragmentProductInfo.class.getName()).commit();
     }
 
     public void popBackStack() {
+        if (currentFragment == FRAGMENT_PRODUCT)
+            currentFragment = FRAGMENT_GOODS;
+        else if (currentFragment == FRAGMENT_GOODS)
+            currentFragment = FRAGMENT_MAIN;
         getSupportFragmentManager().popBackStack();
     }
 
+    @Override public void onBackPressed() {
+        if (currentFragment != FRAGMENT_MAIN)
+            popBackStack();
+        else {
+            moveTaskToBack(true);
+            finish();
+        }
+    }
 }

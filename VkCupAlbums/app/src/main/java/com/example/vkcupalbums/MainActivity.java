@@ -14,6 +14,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.example.vkcupalbums.Fragments.FragmentAlbums;
+import com.example.vkcupalbums.Fragments.FragmentPhoto;
 import com.example.vkcupalbums.Fragments.FragmentPhotoAlbum;
 import com.example.vkcupalbums.ViewAdapter.RecyclerAdapter;
 import com.vk.sdk.VKAccessToken;
@@ -44,8 +45,11 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    private int userId;
-    private String key;
+
+    private int currentFragment;
+    private int FRAGMENT_ALBUM = 0;
+    private int FRAGMENT_PHOTOS = 1;
+    private int FRAGMENT_PHOTO = 2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,8 +69,6 @@ public class MainActivity extends AppCompatActivity {
         if (!VKSdk.isLoggedIn())
             VKSdk.login(this, otherPermissions);
         else {
-            key = VKAccessToken.currentToken().accessToken;
-            userId = Integer.valueOf(VKAccessToken.currentToken().userId);
             loadFragmentAlbums();
         }
         Log.e("mesUri", "api is : " + VKSdk.getApiVersion());
@@ -78,8 +80,6 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onResult(VKAccessToken res) {
-                key = res.accessToken;
-                userId = Integer.valueOf(res.userId);
                 loadFragmentAlbums();
                 // Пользователь успешно авторизовался
             }
@@ -95,17 +95,40 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void loadFragmentAlbums() {
+        currentFragment = FRAGMENT_ALBUM;
         getSupportFragmentManager().beginTransaction().replace(R.id.container, new FragmentAlbums()).addToBackStack(FragmentAlbums.class.getName()).commit();
     }
 
     public void loadFragmentPhoto(int id) {
+        currentFragment = FRAGMENT_PHOTOS;
         FragmentPhotoAlbum fragmentPhotoAlbum = new FragmentPhotoAlbum();
         fragmentPhotoAlbum.setAlbumId(id);
         getSupportFragmentManager().beginTransaction().replace(R.id.container, fragmentPhotoAlbum).addToBackStack(FragmentPhotoAlbum.class.getName()).commit();
     }
 
+    public void loadFragmentPhoto(PhotoInfo photoInfo) {
+        currentFragment = FRAGMENT_PHOTO;
+        FragmentPhoto fragmentPhoto = new FragmentPhoto();
+        fragmentPhoto.setPhoto(photoInfo);
+        getSupportFragmentManager().beginTransaction().replace(R.id.container, fragmentPhoto).addToBackStack(FragmentPhoto.class.getName()).commit();
+    }
+
     public void popBackStack() {
         getSupportFragmentManager().popBackStack();
+    }
+
+    @Override public void onBackPressed() {
+        if (currentFragment == FRAGMENT_PHOTO) {
+            currentFragment = FRAGMENT_PHOTOS;
+            popBackStack();
+        } else if (currentFragment == FRAGMENT_PHOTOS) {
+            currentFragment = FRAGMENT_ALBUM;
+            popBackStack();
+        } else if (currentFragment == FRAGMENT_ALBUM) {
+            moveTaskToBack(true);
+            finish();
+        }
+
     }
 
 }

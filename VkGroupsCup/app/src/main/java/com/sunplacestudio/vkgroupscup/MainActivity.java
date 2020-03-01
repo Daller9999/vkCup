@@ -228,7 +228,7 @@ public class MainActivity extends AppCompatActivity {
                             VKParameters.from(
                                     VKApiConst.USER_ID, userId,
                                     VKApiConst.EXTENDED, 1,
-                                    VKApiConst.FIELDS, "description,members_count",
+                                    VKApiConst.FIELDS, "description,members_count,place",
                                     VKApiConst.COUNT, 3,
                                     "offset", offset));
                     wait = true;

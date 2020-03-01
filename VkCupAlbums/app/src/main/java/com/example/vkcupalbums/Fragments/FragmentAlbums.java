@@ -20,6 +20,7 @@ import android.widget.Toast;
 
 import com.example.vkcupalbums.AlbumInfo;
 import com.example.vkcupalbums.MainActivity;
+import com.example.vkcupalbums.PhotoInfo;
 import com.example.vkcupalbums.R;
 import com.example.vkcupalbums.ViewAdapter.OnRecyclerListener;
 import com.example.vkcupalbums.ViewAdapter.RecyclerAdapter;
@@ -98,6 +99,8 @@ public class FragmentAlbums extends Fragment {
                 if (getActivity() != null)
                     ((MainActivity) getActivity()).loadFragmentPhoto(id);
             }
+
+            @Override public void onPhotoClick(PhotoInfo photoInfo) { }
         });
 
         AlertDialog.Builder builder = new AlertDialog.Builder(view.getContext());

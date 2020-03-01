@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -7,12 +7,102 @@
     tools:context=".MainActivity">
 
     <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintRight_toLeftOf="@id/textViewPhoto"
 
-</android.support.constraint.ConstraintLayout>
+        android:textColor="@color/colorGray"
+        android:gravity="center"
+        android:textSize="16sp"
+        android:text="События"
+        android:textStyle="bold"
+        android:id="@+id/textViewEvent"
+        android:layout_width="0dp"
+        android:layout_height="48dp" />
+    <TextView
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toRightOf="@id/textViewEvent"
+        app:layout_constraintRight_toLeftOf="@id/textViewGroups"
+
+        android:textColor="@color/colorGray"
+        android:gravity="center"
+        android:textSize="16sp"
+        android:text="Фото"
+        android:textStyle="bold"
+        android:id="@+id/textViewPhoto"
+        android:layout_width="0dp"
+        android:layout_height="48dp" />
+    <TextView
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toRightOf="@id/textViewPhoto"
+        app:layout_constraintRight_toRightOf="parent"
+
+        android:textColor="@color/colorGray"
+        android:gravity="center"
+        android:textSize="16sp"
+        android:text="Группы"
+        android:textStyle="bold"
+        android:id="@+id/textViewGroups"
+        android:layout_width="0dp"
+        android:layout_height="48dp" />
+
+    <View
+        app:layout_constraintLeft_toLeftOf="@id/textViewPhoto"
+        app:layout_constraintRight_toRightOf="@id/textViewPhoto"
+        app:layout_constraintBottom_toBottomOf="@id/textViewPhoto"
+
+        android:layout_marginBottom="4dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:background="@color/vk_color"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:id="@+id/textViewPhotoLine"
+        android:layout_width="0dp"
+        android:layout_height="3dp" />
+
+    <View
+        app:layout_constraintLeft_toLeftOf="@id/textViewEvent"
+        app:layout_constraintRight_toRightOf="@id/textViewEvent"
+        app:layout_constraintBottom_toBottomOf="@id/textViewEvent"
+
+        android:layout_marginBottom="4dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:background="@color/vk_color"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:id="@+id/textViewEventLine"
+        android:layout_width="0dp"
+        android:layout_height="3dp" />
+
+    <View
+        app:layout_constraintLeft_toLeftOf="@id/textViewGroups"
+        app:layout_constraintRight_toRightOf="@id/textViewGroups"
+        app:layout_constraintBottom_toBottomOf="@id/textViewGroups"
+
+        android:layout_marginBottom="4dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:background="@color/vk_color"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:id="@+id/textViewGroupsLine"
+        android:layout_width="0dp"
+        android:layout_height="3dp" />
+
+    <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+        app:layout_constraintTop_toBottomOf="@id/textViewEvent"
+        app:layout_constraintBottom_toBottomOf="parent"
+
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:id="@+id/map"
+        tools:context=".MapsActivity"
+        android:name="com.google.android.gms.maps.SupportMapFragment" />
+
+    <include
+        android:visibility="gone"
+        layout="@layout/photo_layout" />
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -27,6 +27,13 @@ public class RecyclerAdapterPhotos extends RecyclerView.Adapter<RecyclerAdapterP
 
     private volatile boolean edit = false;
 
+    public List<PhotoInfo> getList() {
+        List<PhotoInfo> photoInfos = new ArrayList<>();
+        for (PhotoInfo[] photoInfos1 : list)
+            for (PhotoInfo photoInfo : photoInfos1)
+                photoInfos.add(photoInfo);
+        return photoInfos;
+    }
 
     public void setEdit(boolean b) {
         edit = b;
@@ -83,19 +90,6 @@ public class RecyclerAdapterPhotos extends RecyclerView.Adapter<RecyclerAdapterP
             list.add(new PhotoInfo[]{photoInfo, null, null});
         notifyDataSetChanged();
     }
-
-    /*public void onRemoveIds(int[] ids) {
-        List<GroupInfo> newList = new ArrayList<>();
-        Vector<Integer> idv = new Vector<>();
-        for (int id : ids)
-            idv.addElement(id);
-        for (GroupInfo[] info : list) {
-            for (GroupInfo groupInfo : info)
-                if (groupInfo != null && !idv.contains(groupInfo.getId()))
-                    newList.add(groupInfo);
-        }
-        setList(newList);
-    }*/
 
     public void addPhotoInfo(PhotoInfo[] albumInfos) {
         list.add(albumInfos);
@@ -178,13 +172,9 @@ public class RecyclerAdapterPhotos extends RecyclerView.Adapter<RecyclerAdapterP
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
 
         private CardView[] cardViews;
-
         private ImageView[] imageViews;
-
         private Button[] checks;
-
         private View[] viewsDelete;
-
         int[] ids;
 
         ViewHolder(View itemView) {
@@ -212,13 +202,13 @@ public class RecyclerAdapterPhotos extends RecyclerView.Adapter<RecyclerAdapterP
                         viewsDelete[i].setVisibility(View.VISIBLE);
                         return;
                     }
-            } /*else if (onRecyclerListener != null) {
+            } else if (onRecyclerListener != null) {
                 for (int i = 0; i < imageViews.length; i++)
                     if (imageViews[i].getId() == view.getId()) {
-                        onRecyclerListener.onItemClick(list.get(pos)[i].getId());
+                        onRecyclerListener.onPhotoClick(list.get(pos)[i]);
                         return;
                     }
-            }*/
+            }
 
         }
 

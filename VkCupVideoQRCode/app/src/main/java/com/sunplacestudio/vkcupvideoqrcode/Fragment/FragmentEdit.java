@@ -130,6 +130,7 @@ public class FragmentEdit extends Fragment {
 
         Button buttonClose = view.findViewById(R.id.buttonCancelVideo);
         buttonClose.setOnClickListener((v) -> {
+            executorService.shutdownNow();
             if (getActivity() != null)
                 ((MainActivity) getActivity()).loadCameraFragment();
         });
@@ -158,6 +159,8 @@ public class FragmentEdit extends Fragment {
 
         executorService.execute(() -> {
             for (long i = 0; i < duration; i += step) {
+                if (getContext() == null) return; // останавливаем поток, если вышли из приложения раньше
+
                 final ImageView imageViewPreview = new ImageView(getContext());
                 Bitmap bitmap = getBitmapAt(i);
                 imageViewPreview.setLayoutParams(new LinearLayout.LayoutParams(widthConst, ViewGroup.LayoutParams.MATCH_PARENT));
@@ -294,6 +297,7 @@ public class FragmentEdit extends Fragment {
 
     @Override public void onDestroy() {
         super.onDestroy();
+        executorService.shutdownNow();
         fileEdit.delete();
     }
 }

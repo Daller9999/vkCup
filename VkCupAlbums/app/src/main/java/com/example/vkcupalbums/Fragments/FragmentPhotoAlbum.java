@@ -60,6 +60,7 @@ public class FragmentPhotoAlbum extends Fragment {
     private RecyclerAdapterPhotos recyclerAdapterPhotos;
     private boolean edit = false;
     private ExecutorService executorService = Executors.newCachedThreadPool();
+    private List<PhotoInfo> photoInfos = new ArrayList<>();
 
     private Button buttonBack;
     private Button buttonAddPhoto;
@@ -77,13 +78,17 @@ public class FragmentPhotoAlbum extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_photo_albums, container, false);
 
-        loadPhotoAlbum();
-
         RecyclerView recyclerView = view.findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerAdapterPhotos = new RecyclerAdapterPhotos(getContext());
         recyclerAdapterPhotos.setOnRecyclerListener(new OnRecyclerListener() {
             @Override public void onItemClick(int id) {}
+
+            @Override public void onPhotoClick(PhotoInfo photoInfo) {
+                photoInfos = recyclerAdapterPhotos.getList();
+                if (getActivity() != null)
+                    ((MainActivity) getActivity()).loadFragmentPhoto(photoInfo);
+            }
 
             @Override public void onRemove(int[] ids) {
                 executorService.execute(new ThreadRemove(ids));
@@ -111,6 +116,11 @@ public class FragmentPhotoAlbum extends Fragment {
         textViewEdit = view.findViewById(R.id.secondTextDocs);
         buttonStopEdit = view.findViewById(R.id.buttonStopEdit);
         buttonStopEdit.setOnClickListener((v) -> setEdit());
+
+        if (photoInfos.isEmpty())
+            loadPhotoAlbum();
+        else
+            recyclerAdapterPhotos.setList(photoInfos);
 
         return view;
     }
@@ -185,6 +195,7 @@ public class FragmentPhotoAlbum extends Fragment {
         private int offset = 0;
         private int count = 1000;
         private boolean wait = false;
+
         private List<VKApiPhoto> vkApiPhotos = new ArrayList<>();
 
         @Override public void run() {

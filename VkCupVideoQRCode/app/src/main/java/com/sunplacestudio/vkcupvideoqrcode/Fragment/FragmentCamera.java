@@ -42,7 +42,6 @@ public class FragmentCamera extends Fragment {
     private int width;
     private ViewSqare viewFrame;
     private int height;
-    private boolean isLongTap = false;
 
     private CameraService cameraServiceCurrent = null;
 
@@ -92,7 +91,7 @@ public class FragmentCamera extends Fragment {
 
         Button buttonSwitchCamera = view.findViewById(R.id.buttonSwichCamera);
         buttonSwitchCamera.setOnClickListener((v) -> {
-            if (cameraIdsBack.isEmpty() || cameraIdsFront.isEmpty()) return;
+            if (cameraIdsBack.isEmpty() || cameraIdsFront.isEmpty() || !isMakeVideo) return;
             front = !front;
             if (!front) {
                 cameraIdsFront.get(0).closeCamera();

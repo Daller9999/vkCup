@@ -5,18 +5,26 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
+import android.graphics.drawable.BitmapDrawable;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraMetadata;
+import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
+import android.hardware.camera2.CaptureResult;
+import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.media.Image;
+import android.media.ImageReader;
 import android.media.MediaRecorder;
 import android.os.Build;
 
@@ -41,6 +49,7 @@ import com.sunplacestudio.vkcupvideoqrcode.CustomComponents.CustomTextureView;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -156,6 +165,7 @@ public class CameraService {
         textureView.setTransform(matrix);
     }
 
+    private long lastFrame = 0;
     private TextureView.SurfaceTextureListener surfaceTextureListener = new TextureView.SurfaceTextureListener() {
         @Override public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int i, int i1) {}
         @Override public void onSurfaceTextureSizeChanged(SurfaceTexture surfaceTexture, int width, int height) {
@@ -188,6 +198,7 @@ public class CameraService {
     }
 
     public String getCameraId() { return cameraId; }
+    private Handler handler = new Handler();
 
     private void startPreview() {
         try {
@@ -195,11 +206,13 @@ public class CameraService {
             SurfaceTexture texture = textureView.getSurfaceTexture();
             texture.setDefaultBufferSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
             mPreviewBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+            List<Surface> surfaces = new ArrayList<>();
 
             Surface previewSurface = new Surface(texture);
+            surfaces.add(previewSurface);
             mPreviewBuilder.addTarget(previewSurface);
 
-            cameraDevice.createCaptureSession(Collections.singletonList(previewSurface), new CameraCaptureSession.StateCallback() {
+            cameraDevice.createCaptureSession(surfaces, new CameraCaptureSession.StateCallback() {
                         @Override public void onConfigured(@NonNull CameraCaptureSession session) {
                             mCaptureSession = session;
                             try {
@@ -208,7 +221,7 @@ public class CameraService {
                                 Log.e(LOG_TAG, "error" + ex.getMessage());
                                 ex.printStackTrace();
                             }
-                            new ScanThread().start();
+                            textureView.startTextureRecognize(onTextureQrRecongnize);
                         }
 
                         @Override public void onConfigureFailed(@NonNull CameraCaptureSession session) {
@@ -220,51 +233,10 @@ public class CameraService {
         }
     }
 
-    private class ScanThread extends Thread {
-        @Override public void run() {
-            long start = System.currentTimeMillis();
-            int[] intArray;
-            Reader reader;
-            Result result;
-            LuminanceSource source;
-            BinaryBitmap bitmapBinary;
+    private CustomTextureView.OnTextureQrRecongnize onTextureQrRecongnize = (text) -> {
+        handler.post(() -> postRecognize(text));
+    };
 
-            while (qrRun) {
-                try {
-                    if (System.currentTimeMillis() - start > 1000) {
-                        Bitmap bitmap = takeBitmap();
-                        if (bitmap != null) {
-                            intArray = new int[bitmap.getWidth() * bitmap.getHeight()];
-                            bitmap.getPixels(intArray, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
-
-                            source = new RGBLuminanceSource(bitmap.getWidth(), bitmap.getHeight(), intArray);
-                            bitmapBinary = new BinaryBitmap(new HybridBinarizer(source));
-
-                            reader = new MultiFormatReader();
-                            result = reader.decode(bitmapBinary);
-                            String contents = result.getText();
-
-                            handlerPost.post(() -> postRecognize(contents));
-                        }
-                        start = System.currentTimeMillis();
-                    }
-                } catch (Exception ex) {
-                    start = System.currentTimeMillis();
-                    // Log.e(LOG_TAG, "Recognize not found");
-                    handlerPost.post(() -> postRecognize(null));
-                }
-                try {
-                    sleep(100);
-                } catch (InterruptedException ex) {
-                    //
-                }
-            }
-        }
-    }
-
-    private Bitmap takeBitmap() {
-        return textureView.getBitmap();
-    }
     private Handler handlerPost = new Handler();
 
     private void postRecognize(String text) {
@@ -411,6 +383,7 @@ public class CameraService {
     public File stopRecordingVideo() {
         closeCamera();
 
+        textureView.stopRecognize();
         mediaRecorder.stop();
         mediaRecorder.reset();
         mediaRecorder = null;

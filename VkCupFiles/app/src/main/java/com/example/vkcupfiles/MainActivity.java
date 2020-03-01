@@ -20,6 +20,10 @@ import com.vk.sdk.api.VKError;
 
 public class MainActivity extends AppCompatActivity {
 
+    private int currentFragment;
+    private int FRAGMENT_SHOW_FILE = 1;
+    private int FRAGMENT_LIST_FILES = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,10 +67,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void loadFragmentFilesList() {
+        currentFragment = FRAGMENT_LIST_FILES;
         getSupportFragmentManager().beginTransaction().replace(R.id.container, new FragmentListFiles()).addToBackStack(FragmentListFiles.class.getName()).commit();
     }
 
     public void loadDataFile(VkDocsData vkDocsData) {
+        currentFragment = FRAGMENT_SHOW_FILE;
         FragmentShowData fragmentShowData = new FragmentShowData();
         fragmentShowData.setData(vkDocsData);
         getSupportFragmentManager().beginTransaction().setCustomAnimations(R.anim.fragment_in, R.anim.fragment_out).replace(R.id.container, fragmentShowData)
@@ -74,8 +80,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void popBackStack() {
+        currentFragment = FRAGMENT_LIST_FILES;
         getSupportFragmentManager().popBackStack();
     }
 
+    @Override public void onBackPressed() {
+        if (currentFragment == FRAGMENT_SHOW_FILE)
+            popBackStack();
+        else  {
+            moveTaskToBack(true);
+            finish();
+        }
+
+    }
 
 }

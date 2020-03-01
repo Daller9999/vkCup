@@ -8,6 +8,6 @@ public class ApplicationInit extends Application {
 
     @Override public void onCreate() {
         super.onCreate();
-        VKSdk.initialize(this);
+        VKSdk.customInitialize(this, R.integer.com_vk_sdk_AppId, "5.103");
     }
 }

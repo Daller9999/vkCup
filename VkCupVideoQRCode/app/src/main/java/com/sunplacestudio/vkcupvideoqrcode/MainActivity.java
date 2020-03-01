@@ -5,13 +5,16 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import com.sunplacestudio.vkcupvideoqrcode.Fragment.FragmentCamera;
 import com.sunplacestudio.vkcupvideoqrcode.Fragment.FragmentEdit;
+import com.sunplacestudio.vkcupvideoqrcode.Fragment.FragmentPermissions;
 
 import java.io.File;
 
@@ -20,10 +23,11 @@ import java.io.File;
 public class MainActivity extends AppCompatActivity {
 
     public static final String LOG_TAG = "mesUri";
+    private boolean isLoad = false;
 
     private static final int FRAGMENT_CAMERA = 0;
     private static final int FRAGMENT_EDIT_VIDEO = 1;
-    private int currentFragment;
+    private int currentFragment = 0;
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -44,8 +48,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        // showEditVideoFragment(null);
-        getSupportFragmentManager().beginTransaction().replace(R.id.container, new FragmentCamera()).addToBackStack(FragmentCamera.class.getName()).commit();
 
         this.getWindow().getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE
@@ -89,7 +91,25 @@ public class MainActivity extends AppCompatActivity {
             moveTaskToBack(true);
             finish();
         }
+    }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        boolean ok = true;
+        for (int i = 0; i < permissions.length; i++)
+            if (grantResults[i] == PackageManager.PERMISSION_DENIED) {
+                ok = false;
+                break;
+            }
+        if (ok)
+            ok = permissions.length != 0;
+
+        if (ok)
+            loadCameraFragment();
+        else
+            getSupportFragmentManager().beginTransaction().replace(R.id.container, new FragmentPermissions()).commit();
+
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
 }
