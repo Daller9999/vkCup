@@ -45,6 +45,9 @@ import com.vk.sdk.api.photo.VKImageParameters;
 import com.vk.sdk.api.photo.VKUploadImage;
 import com.vk.sdk.util.VKUtil;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 public class MainActivity extends AppCompatActivity {
 
     /**
@@ -65,6 +68,8 @@ public class MainActivity extends AppCompatActivity {
 
     private String key;
     private int userId;
+
+    private ExecutorService executorService = Executors.newCachedThreadPool();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,7 +110,7 @@ public class MainActivity extends AppCompatActivity {
 
         Button buttonSend = findViewById(R.id.buttonSend);
         buttonSend.setOnClickListener((v) -> {
-            loadPhotoToWall();
+            executorService.execute(this::loadPhotoToWall);
             hideSelectedPhoto();
         });
 
@@ -138,11 +143,13 @@ public class MainActivity extends AppCompatActivity {
                 case 1:
                     if(resultCode == RESULT_OK){
                         Uri selectedImage = data.getData();
-                        String path = getPath(selectedImage);
-                        bitmap = BitmapFactory.decodeFile(path);
-
-                        layout.setVisibility(View.VISIBLE);
-                        imageView.setImageURI(selectedImage);
+                        try {
+                            bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), selectedImage);
+                            layout.setVisibility(View.VISIBLE);
+                            imageView.setImageURI(selectedImage);
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
                     }
             }
         }
@@ -157,7 +164,7 @@ public class MainActivity extends AppCompatActivity {
                 super.onComplete(response);
                 VKPhotoArray vkApiPhotos = (VKPhotoArray) response.parsedModel;
                 VKApiPhoto vkApiPhoto = vkApiPhotos.get(0);
-                loadTextAfterLoadPhoto(vkApiPhoto.id);
+                executorService.execute(() -> loadTextAfterLoadPhoto(vkApiPhoto.id));
             }
 
             @Override public void onError(VKError error) {

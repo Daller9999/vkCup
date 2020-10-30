@@ -130,36 +130,39 @@ public class FragmentPhotoAlbum extends Fragment {
             case 111:
                 if(resultCode == RESULT_OK){
                     Uri selectedImage = data.getData();
-                    sendToServer(selectedImage);
+                    executorService.execute(() -> sendToServer(selectedImage));
                 }
         }
     }
 
     private void sendToServer(Uri uri) {
-        String path = getPath(uri);
-        Bitmap bitmap = BitmapFactory.decodeFile(path);
-        VKUploadImage vkUploadImage = new VKUploadImage(bitmap, VKImageParameters.pngImage());
-        VKApi.uploadAlbumPhotoRequest(vkUploadImage, albumId, 0).executeWithListener(new VKRequest.VKRequestListener() {
-            @Override public void onComplete(VKResponse response) {
-                super.onComplete(response); // response => VkApiPhoto
-                try {
-                    JSONArray jsonArray = ((JSONArray) response.json.get("response"));
-                    VKApiPhoto vkApiPhoto = new VKApiPhoto();
-                    vkApiPhoto = vkApiPhoto.parse((JSONObject) jsonArray.get(0));
-                    executorService.execute(new ThreadLoadPhoto(vkApiPhoto));
-                } catch (JSONException ex) {
-                    //
+        try {
+            Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContext().getContentResolver(), uri);
+            VKUploadImage vkUploadImage = new VKUploadImage(bitmap, VKImageParameters.pngImage());
+            VKApi.uploadAlbumPhotoRequest(vkUploadImage, albumId, 0).executeWithListener(new VKRequest.VKRequestListener() {
+                @Override
+                public void onComplete(VKResponse response) {
+                    super.onComplete(response); // response => VkApiPhoto
+                    try {
+                        JSONArray jsonArray = ((JSONArray) response.json.get("response"));
+                        VKApiPhoto vkApiPhoto = new VKApiPhoto();
+                        vkApiPhoto = vkApiPhoto.parse((JSONObject) jsonArray.get(0));
+                        executorService.execute(new ThreadLoadPhoto(vkApiPhoto));
+                    } catch (JSONException ex) {
+                        //
+                    }
+                    // recyclerAdapterPhotos.addPhotoInfo();
                 }
-                // recyclerAdapterPhotos.addPhotoInfo();
-            }
 
-            @Override public void onError(VKError error) {
-                super.onError(error);
-                Toast.makeText(getContext(), "Не удалось загрузить фото", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-
+                @Override
+                public void onError(VKError error) {
+                    super.onError(error);
+                    Toast.makeText(getContext(), "Не удалось загрузить фото", Toast.LENGTH_SHORT).show();
+                }
+            });
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 
     public String getPath(Uri uri) {
