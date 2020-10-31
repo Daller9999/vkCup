@@ -110,8 +110,7 @@ public class FragmentPhotoAlbum extends Fragment {
 
         buttonBack = view.findViewById(R.id.buttonBack);
         buttonBack.setOnClickListener((v) -> {
-            if (getActivity() != null)
-                ((MainActivity) getActivity()).popBackStack();
+            getFragmentManager().popBackStack();
         });
 
         textViewEdit = view.findViewById(R.id.secondTextDocs);

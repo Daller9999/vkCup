@@ -20,8 +20,8 @@ public class ViewPagerAdapter extends FragmentPagerAdapter {
 
     ViewPagerAdapter(FragmentManager fm) {
         super(fm);
-        mFragmentList.add(new FragmentMainDocuments());
         mFragmentList.add(new FragmentMainPhoto());
+        mFragmentList.add(new FragmentMainDocuments());
     }
 
     @Override public Fragment getItem(int position) {

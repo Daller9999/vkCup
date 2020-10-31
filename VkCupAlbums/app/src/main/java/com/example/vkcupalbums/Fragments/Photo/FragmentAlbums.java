@@ -1,7 +1,5 @@
 package com.example.vkcupalbums.Fragments.Photo;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
@@ -18,7 +16,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.vkcupalbums.MainActivity;
+import com.example.vkcupalbums.DataLoader.DataLoader;
 import com.example.vkcupalbums.Objects.AlbumInfo;
 import com.example.vkcupalbums.Objects.PhotoInfo;
 import com.example.vkcupalbums.R;
@@ -32,14 +30,14 @@ import com.vk.sdk.api.VKRequest;
 import com.vk.sdk.api.VKResponse;
 import com.vk.sdk.api.model.VKApiPhotoAlbum;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
+
+import static java.lang.Thread.sleep;
 
 public class FragmentAlbums extends Fragment {
 
@@ -87,7 +85,17 @@ public class FragmentAlbums extends Fragment {
 
         recyclerAdapter.setOnRecyclerListener(new OnRecyclerListener() {
             @Override public void onRemove(int[] ids) {
-                new ThreadRemove(ids).start();
+                Vector<Integer> v = new Vector<>();
+                for (int i : ids)
+                    v.addElement(i);
+
+                List<AlbumInfo> albumInfos = new ArrayList<>();
+                for (AlbumInfo albumInfo : albumInfoList)
+                    if (!v.contains(albumInfo.getId()))
+                        albumInfos.add(albumInfo);
+                albumInfoList = new ArrayList<>(albumInfos);
+
+                DataLoader.getInstance().removeAlbums(ids);
             }
 
             @Override public void onLongClick() {
@@ -123,85 +131,10 @@ public class FragmentAlbums extends Fragment {
         return view;
     }
 
-    private class ThreadRemove extends Thread {
-
-        private int[] ids;
-        private boolean wait = true;
-        private boolean error = false;
-
-        ThreadRemove(int[] ids) {
-            Vector<Integer> v = new Vector<>();
-            for (int i : ids)
-                v.addElement(i);
-            this.ids = ids;
-            List<AlbumInfo> albumInfos = new ArrayList<>();
-            for (AlbumInfo albumInfo : albumInfoList)
-                if (!v.contains(albumInfo.getId()))
-                    albumInfos.add(albumInfo);
-            albumInfoList = new ArrayList<>(albumInfos);
-        }
-
-        @Override public void run() {
-            try {
-                for (int id : ids) {
-                    VKRequest vkRequest = new VKRequest("photos.deleteAlbum", VKParameters.from(VKApiConst.ALBUM_ID, id));
-                    wait = true;
-                    vkRequest.executeWithListener(vkRequestListener);
-                    while (wait) {
-                        sleep(50);
-                        if (error)
-                            return;
-                    }
-                    sleep(300);
-                }
-            } catch (InterruptedException ex) {
-                //
-            }
-        }
-
-        private VKRequest.VKRequestListener vkRequestListener = new VKRequest.VKRequestListener() {
-            @Override
-            public void onComplete(VKResponse response) {
-                super.onComplete(response);
-                wait = false;
-            }
-
-            @Override
-            public void onError(VKError error) {
-                super.onError(error);
-                FragmentAlbums.ThreadRemove.this.error = true;
-                Toast.makeText(getContext(), "Не удалось удалить сообщества", Toast.LENGTH_SHORT).show();
-            }
-        };
-    }
-
     private void createAlbumApi(String name) {
-        VKRequest vkRequest = new VKRequest("photos.createAlbum",
-                VKParameters.from(
-                        VKApiConst.OWNER_ID, userId,
-                        "title", name,
-                        "type", "all",
-                        "users", 0));
-        vkRequest.executeWithListener(new VKRequest.VKRequestListener() {
-            @Override public void onComplete(VKResponse response) {
-                super.onComplete(response);
-                JSONObject jsonObject = response.json;
-                try {
-                    JSONObject jsonObject1 = ((JSONObject) jsonObject.get("response"));
-                    VKApiPhotoAlbum vkApiPhotoAlbum = new VKApiPhotoAlbum();
-                    final VKApiPhotoAlbum vkApiPhotoAlbum1 = vkApiPhotoAlbum.parse(jsonObject1);
-                    AlbumInfo albumInfo = new AlbumInfo(vkApiPhotoAlbum1.title, vkApiPhotoAlbum1.id, 0, null);
-                    albumInfoList.add(albumInfo);
-                    handler.post(() -> recyclerAdapter.addAlbumInfo(albumInfo));
-                } catch (JSONException ex) {
-                    Log.e("mesUri", "json error : " + ex.getMessage());
-                }
-            }
-
-            @Override public void onError(VKError error) {
-                super.onError(error);
-                Toast.makeText(getContext(),"Произошла ошибка, не удалось создать группу, проверьте соединение с интернетом", Toast.LENGTH_SHORT).show();
-            }
+        DataLoader.getInstance().createAlbum(name, albumInfo -> {
+            albumInfoList.add(albumInfo);
+            recyclerAdapter.addAlbumInfo(albumInfo);
         });
     }
 
@@ -220,87 +153,9 @@ public class FragmentAlbums extends Fragment {
     }
 
     private void loadUserAlbums() {
-        new ThreadLoadData().start();
-    }
-
-    private class ThreadLoadData extends Thread {
-        private int offset = 0;
-        private int count = 50;
-        private boolean wait = true;
-
-        ThreadLoadData() { }
-
-        @Override public void run() {
-
-            while (count > 0) {
-                VKRequest vkRequest = new VKRequest("photos.getAlbums",
-                        VKParameters.from(VKApiConst.OWNER_ID, userId, "need_system", 1, "need_covers", 1, "offset", offset, "count", count));
-                vkRequest.executeWithListener(vkRequestListener);
-                try {
-                    while (wait)
-                        sleep(50);
-                } catch (InterruptedException ex) {
-                    //
-                }
-            }
-            handler.post(() -> recyclerAdapter.setList(albumInfoList));
-
-            int pos = -1;
-            int rowNow = 0;
-            for (int i = 0; i < albumInfoList.size(); i++) {
-                String http = albumInfoList.get(i).getHttp();
-
-                Bitmap mIcon11 = null;
-                try {
-                    InputStream in = new java.net.URL(http).openStream();
-                    mIcon11 = BitmapFactory.decodeStream(in);
-                } catch (Exception e) {
-                    Log.e("mesUri", "error to load image : " + e.getMessage());
-                }
-                pos++;
-
-                final int row = rowNow;
-                final int column = pos;
-                final Bitmap bitmap = mIcon11;
-                handler.post(() -> recyclerAdapter.setImageBitmap(row, column, bitmap));
-
-                if (pos == 1) {
-                    rowNow++;
-                    pos = -1;
-                }
-            }
-        }
-
-        private VKRequest.VKRequestListener vkRequestListener = new VKRequest.VKRequestListener() {
-            @Override
-            public void onComplete(VKResponse response) {
-                super.onComplete(response);
-                JSONObject jsonObject = response.json;
-                try {
-                    JSONObject jsonObject1 = ((JSONObject) jsonObject.get("response"));
-                    count = jsonObject1.getInt("count");
-                    JSONArray data = jsonObject1.getJSONArray("items");
-
-                    VKApiPhotoAlbum vkApiPhotoAlbum;
-                    VKApiPhotoAlbum[] vkApiPhotoAlbums = new VKApiPhotoAlbum[count];
-                    for (int i = 0; i < count; i++) {
-                        vkApiPhotoAlbum = new VKApiPhotoAlbum();
-                        vkApiPhotoAlbums[i] = vkApiPhotoAlbum.parse((JSONObject) data.get(i));
-                    }
-                    for (VKApiPhotoAlbum vkApiPhotoAlbum1 : vkApiPhotoAlbums)
-                        albumInfoList.add(new AlbumInfo(vkApiPhotoAlbum1.title, vkApiPhotoAlbum1.id, vkApiPhotoAlbum1.size, vkApiPhotoAlbum1.thumb_src));
-
-                    offset += count;
-                    wait = false;
-                } catch (JSONException ex) {
-                    Log.e("mesUri", "json error : " + ex.getMessage());
-                }
-            }
-
-            @Override
-            public void onError(VKError error) {
-                super.onError(error);
-            }
-        };
+        DataLoader.getInstance().loadPhotoData(albumInfoList -> {
+            this.albumInfoList = albumInfoList;
+            recyclerAdapter.setList(albumInfoList);
+        });
     }
 }

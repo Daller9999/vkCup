@@ -21,12 +21,6 @@ import com.vk.sdk.api.VKError;
 
 public class MainActivity extends AppCompatActivity {
 
-
-    private int currentFragment;
-    private int FRAGMENT_ALBUM = 0;
-    private int FRAGMENT_PHOTOS = 1;
-    private int FRAGMENT_PHOTO = 2;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= 23)
             requestPermissions(permissions, 1);
 
-        String[] otherPermissions = {VKScope.PHOTOS};
+        String[] otherPermissions = {VKScope.PHOTOS, VKScope.DOCS};
         if (!VKSdk.isLoggedIn())
             VKSdk.login(this, otherPermissions);
         else {
@@ -59,7 +53,6 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onResult(VKAccessToken res) {
-                loadFragmentAlbums();
                 // Пользователь успешно авторизовался
             }
 
@@ -73,40 +66,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void loadFragmentAlbums() {
-        currentFragment = FRAGMENT_ALBUM;
-        getSupportFragmentManager().beginTransaction().replace(R.id.container, new FragmentAlbums()).addToBackStack(FragmentAlbums.class.getName()).commit();
-    }
-
-    public void loadFragmentPhoto(int id) {
-        currentFragment = FRAGMENT_PHOTOS;
-        FragmentPhotoAlbum fragmentPhotoAlbum = new FragmentPhotoAlbum();
-        fragmentPhotoAlbum.setAlbumId(id);
-        getSupportFragmentManager().beginTransaction().replace(R.id.container, fragmentPhotoAlbum).addToBackStack(FragmentPhotoAlbum.class.getName()).commit();
-    }
-
-    public void loadFragmentPhoto(PhotoInfo photoInfo) {
-        currentFragment = FRAGMENT_PHOTO;
-        FragmentPhoto fragmentPhoto = new FragmentPhoto();
-        fragmentPhoto.setPhoto(photoInfo);
-        getSupportFragmentManager().beginTransaction().replace(R.id.container, fragmentPhoto).addToBackStack(FragmentPhoto.class.getName()).commit();
-    }
-
-    public void popBackStack() {
-        getSupportFragmentManager().popBackStack();
-    }
 
     @Override public void onBackPressed() {
-        if (currentFragment == FRAGMENT_PHOTO) {
-            currentFragment = FRAGMENT_PHOTOS;
-            popBackStack();
-        } else if (currentFragment == FRAGMENT_PHOTOS) {
-            currentFragment = FRAGMENT_ALBUM;
-            popBackStack();
-        } else if (currentFragment == FRAGMENT_ALBUM) {
-            moveTaskToBack(true);
-            finish();
-        }
 
     }
 

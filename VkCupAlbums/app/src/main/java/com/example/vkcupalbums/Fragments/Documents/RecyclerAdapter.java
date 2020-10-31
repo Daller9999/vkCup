@@ -281,25 +281,6 @@ class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHolder> {
         observable = observable.observeOn(AndroidSchedulers.mainThread()).subscribeOn(Schedulers.newThread());
         observable.subscribe(dataLoad -> updateImage(dataLoad.bitmap, dataLoad.pos),
                              throwable -> throwable.printStackTrace());
-        /*new Thread(() -> {
-            int count = 0;
-            for (int i = 0; i < httpsPhotos.size() && isLoadRun; i++) {
-                VkDocsData vkDocsData = list.get(i);
-                if (needLoad.get(i) && (vkDocsData.getType() == VkDocsData.IMAGE || vkDocsData.getType() == VkDocsData.GIF)) {
-                    String http = httpsPhotos.get(i);
-                    try {
-                        Bitmap bitmap = loadPhoto(http);
-                        final int pos = count;
-                        while (list.size() < pos + 1)
-                            sleep(50);
-                        handler.post(() -> updateImage(bitmap, pos));
-                    } catch (InterruptedException ex) {
-                        //
-                    }
-                }
-                count++;
-            }
-        }).start();*/
     }
 
     private class DataLoad {
