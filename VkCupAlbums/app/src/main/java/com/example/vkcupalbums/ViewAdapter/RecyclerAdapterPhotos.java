@@ -154,6 +154,7 @@ public class RecyclerAdapterPhotos extends RecyclerView.Adapter<RecyclerAdapterP
             InputStream in = new java.net.URL(http).openStream();
             mIcon11 = BitmapFactory.decodeStream(in);
         } catch (Exception e) {
+            e.printStackTrace();
             Log.e("mesUri", "error to load image : " + e.getMessage());
         }
         return mIcon11;

@@ -86,7 +86,12 @@ public class FragmentPhotoAlbum extends Fragment {
                 photoInfos = recyclerAdapterPhotos.getList();
                 FragmentPhoto fragmentPhoto = new FragmentPhoto();
                 fragmentPhoto.setPhoto(photoInfo);
-                getFragmentManager().beginTransaction().replace(R.id.container_photo, fragmentPhoto).addToBackStack(FragmentPhoto.class.getName()).commit();
+                getFragmentManager()
+                        .beginTransaction()
+                        .setCustomAnimations(R.anim.to_left_in, R.anim.to_left_out, R.anim.to_right_in, R.anim.to_right_out)
+                        .replace(R.id.container_photo, fragmentPhoto)
+                        .addToBackStack(FragmentPhoto.class.getName())
+                        .commit();
             }
 
             @Override public void onRemove(int[] ids) {
@@ -145,7 +150,8 @@ public class FragmentPhotoAlbum extends Fragment {
                         JSONArray jsonArray = ((JSONArray) response.json.get("response"));
                         VKApiPhoto vkApiPhoto = new VKApiPhoto();
                         vkApiPhoto = vkApiPhoto.parse((JSONObject) jsonArray.get(0));
-                        executorService.execute(new ThreadLoadPhoto(vkApiPhoto));
+                        if (executorService != null)
+                            executorService.execute(new ThreadLoadPhoto(vkApiPhoto));
                     } catch (JSONException ex) {
                         ex.printStackTrace();
                     }

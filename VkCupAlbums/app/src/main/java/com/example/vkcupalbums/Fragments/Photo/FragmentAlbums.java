@@ -88,7 +88,12 @@ public class FragmentAlbums extends Fragment {
             @Override public void onItemClick(int id) {
                 FragmentPhotoAlbum fragmentPhotoAlbum = new FragmentPhotoAlbum();
                 fragmentPhotoAlbum.setAlbumId(id);
-                getFragmentManager().beginTransaction().replace(R.id.container_photo, fragmentPhotoAlbum).addToBackStack(FragmentPhotoAlbum.class.getName()).commit();
+                getFragmentManager()
+                        .beginTransaction()
+                        .setCustomAnimations(R.anim.to_left_in, R.anim.to_left_out, R.anim.to_right_in, R.anim.to_right_out)
+                        .replace(R.id.container_photo, fragmentPhotoAlbum)
+                        .addToBackStack(FragmentPhotoAlbum.class.getName())
+                        .commit();
             }
 
             @Override public void onPhotoClick(PhotoInfo photoInfo) { }

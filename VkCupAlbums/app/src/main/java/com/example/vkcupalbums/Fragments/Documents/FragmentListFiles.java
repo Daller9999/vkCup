@@ -51,7 +51,7 @@ public class FragmentListFiles extends Fragment {
                     fragmentShowData.setData(vkDocsData);
                     getFragmentManager()
                             .beginTransaction()
-                            .setCustomAnimations(R.anim.fragment_in, R.anim.fragment_out)
+                            .setCustomAnimations(R.anim.to_left_in, R.anim.to_left_out, R.anim.to_right_in, R.anim.to_right_out)
                             .replace(R.id.container_documents, fragmentShowData)
                             .addToBackStack(FragmentShowData.class.getName()).commit();
             }

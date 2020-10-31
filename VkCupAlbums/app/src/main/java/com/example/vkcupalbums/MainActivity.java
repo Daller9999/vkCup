@@ -38,12 +38,10 @@ public class MainActivity extends AppCompatActivity {
         String[] otherPermissions = {VKScope.PHOTOS, VKScope.DOCS};
         if (!VKSdk.isLoggedIn())
             VKSdk.login(this, otherPermissions);
-        else {
-            ViewPager viewPager = findViewById(R.id.viewPager);
-            viewPager.setOffscreenPageLimit(2);
-            ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
-            viewPager.setAdapter(adapter);
-        }
+        ViewPager viewPager = findViewById(R.id.viewPager);
+        viewPager.setOffscreenPageLimit(2);
+        ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
+        viewPager.setAdapter(adapter);
         Log.e("mesUri", "api is : " + VKSdk.getApiVersion());
     }
 
