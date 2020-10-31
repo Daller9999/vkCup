@@ -1,26 +1,6 @@
 package com.example.vkcupalbums.DataLoader;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.util.Log;
-
-import com.example.vkcupalbums.Objects.AlbumInfo;
-import com.vk.sdk.VKAccessToken;
-import com.vk.sdk.api.VKApiConst;
-import com.vk.sdk.api.VKError;
-import com.vk.sdk.api.VKParameters;
-import com.vk.sdk.api.VKRequest;
-import com.vk.sdk.api.VKResponse;
-import com.vk.sdk.api.model.VKApiPhotoAlbum;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.InputStream;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import android.os.Handler;
@@ -37,8 +17,8 @@ public final class DataLoader {
 
     public static DataLoader getInstance() { return dataLoader; }
 
-    public synchronized void loadPhotoData(ThreadPhotoLoader.OnPhotoLoad onPhotoLoad) {
-        addLoad(new ThreadPhotoLoader(onPhotoLoad, handler, onOverLoad));
+    public synchronized void loadAlbums(ThreadAlbumLoader.OnAlbumsLoad onAlbumsLoad) {
+        addLoad(new ThreadAlbumLoader(onAlbumsLoad, handler, onOverLoad));
     }
 
     public synchronized void loadDocuments(ThreadFilesLoad.OnDocsLoad onDocsLoad) {
@@ -51,6 +31,14 @@ public final class DataLoader {
 
     public synchronized void createAlbum(String name, ThreadCreateAlbum.OnAlbumCreated onAlbumCreated) {
         addLoad(new ThreadCreateAlbum(name, onAlbumCreated, handler, onOverLoad));
+    }
+
+    public synchronized void loadPhotoAlbums(int albumId, ThreadLoadAlbumPhotos.OnPhotoLoaded onPhotoLoaded) {
+        addLoad(new ThreadLoadAlbumPhotos(handler, onOverLoad, albumId, onPhotoLoaded));
+    }
+
+    public synchronized void removePhotos(int[] ids) {
+        addLoad(new ThreadRemovePhotos(ids, handler, onOverLoad));
     }
 
     private OnOverLoad onOverLoad = new OnOverLoad() {

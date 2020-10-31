@@ -16,12 +16,12 @@ import com.vk.sdk.api.model.VKApiPhotoAlbum;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class ThreadCreateAlbum extends ThreadRunners {
+class ThreadCreateAlbum extends ThreadRunners {
 
     private OnAlbumCreated onAlbumCreated;
     private String name;
 
-    public ThreadCreateAlbum(String name, OnAlbumCreated onAlbumCreated, Handler handler, OnOverLoad onOverLoad) {
+    ThreadCreateAlbum(String name, OnAlbumCreated onAlbumCreated, Handler handler, OnOverLoad onOverLoad) {
         super(onOverLoad, handler);
         this.name = name;
         this.onAlbumCreated = onAlbumCreated;

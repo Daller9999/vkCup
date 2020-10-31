@@ -22,6 +22,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.vkcupalbums.DataLoader.DataLoader;
 import com.example.vkcupalbums.MainActivity;
 import com.example.vkcupalbums.Objects.PhotoInfo;
 import com.example.vkcupalbums.R;
@@ -56,7 +57,6 @@ import static java.lang.Thread.sleep;
 public class FragmentPhotoAlbum extends Fragment {
 
     private int albumId;
-    private int userId;
     private RecyclerAdapterPhotos recyclerAdapterPhotos;
     private boolean edit = false;
     private ExecutorService executorService = Executors.newCachedThreadPool();
@@ -74,8 +74,6 @@ public class FragmentPhotoAlbum extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        userId = Integer.valueOf(VKAccessToken.currentToken().userId);
-
         View view = inflater.inflate(R.layout.fragment_photo_albums, container, false);
 
         RecyclerView recyclerView = view.findViewById(R.id.recyclerView);
@@ -92,7 +90,7 @@ public class FragmentPhotoAlbum extends Fragment {
             }
 
             @Override public void onRemove(int[] ids) {
-                executorService.execute(new ThreadRemove(ids));
+                DataLoader.getInstance().removePhotos(ids);
             }
 
             @Override public void onLongClick() {
@@ -142,16 +140,15 @@ public class FragmentPhotoAlbum extends Fragment {
             VKApi.uploadAlbumPhotoRequest(vkUploadImage, albumId, 0).executeWithListener(new VKRequest.VKRequestListener() {
                 @Override
                 public void onComplete(VKResponse response) {
-                    super.onComplete(response); // response => VkApiPhoto
+                    super.onComplete(response);
                     try {
                         JSONArray jsonArray = ((JSONArray) response.json.get("response"));
                         VKApiPhoto vkApiPhoto = new VKApiPhoto();
                         vkApiPhoto = vkApiPhoto.parse((JSONObject) jsonArray.get(0));
                         executorService.execute(new ThreadLoadPhoto(vkApiPhoto));
                     } catch (JSONException ex) {
-                        //
+                        ex.printStackTrace();
                     }
-                    // recyclerAdapterPhotos.addPhotoInfo();
                 }
 
                 @Override
@@ -163,15 +160,6 @@ public class FragmentPhotoAlbum extends Fragment {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-    }
-
-    public String getPath(Uri uri) {
-        String[] projection = { MediaStore.Images.Media.DATA };
-        CursorLoader loader = new CursorLoader(getContext(), uri, projection, null, null, null);
-        Cursor cursor = loader.loadInBackground();
-        int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-        cursor.moveToFirst();
-        return cursor.getString(column_index);
     }
 
     private void setEdit() {
@@ -190,138 +178,12 @@ public class FragmentPhotoAlbum extends Fragment {
     }
 
     private void loadPhotoAlbum() {
-        executorService.execute(new ThreadLoadPhotoData());
-    }
-
-    private class ThreadLoadPhotoData implements Runnable {
-
-        private int offset = 0;
-        private int count = 1000;
-        private boolean wait = false;
-
-        private List<VKApiPhoto> vkApiPhotos = new ArrayList<>();
-
-        @Override public void run() {
-            while (count > 0) {
-                VKRequest vkRequest = new VKRequest("photos.get",
-                        VKParameters.from(VKApiConst.OWNER_ID, userId, VKApiConst.ALBUM_ID, albumId, VKApiConst.COUNT, 1000, "offset", offset));
-                vkRequest.executeWithListener(vkRequestListener);
-                wait = true;
-                try {
-                    while (wait)
-                        sleep(50);
-                } catch (InterruptedException ex) {
-                    //
-                }
-            }
-            executorService.execute(new ThreadLoadData(vkApiPhotos));
-        }
-
-        private VKRequest.VKRequestListener vkRequestListener = new VKRequest.VKRequestListener() {
-            @Override public void onComplete(VKResponse response) {
-                super.onComplete(response);
-                JSONObject jsonObject = response.json;
-                try {
-                    JSONObject jsonObject1 = ((JSONObject) jsonObject.get("response"));
-                    JSONArray data = jsonObject1.getJSONArray("items");
-                    count = data.length();
-
-                    VKApiPhoto vkApiPhoto;
-                    for (int i = 0; i < count; i++) {
-                        vkApiPhoto = new VKApiPhoto();
-                        vkApiPhotos.add(vkApiPhoto.parse((JSONObject) data.get(i)));
-                    }
-                    offset += 1000;
-                } catch (JSONException ex) {
-                    Log.e("mesUri", "json error : " + ex.getMessage());
-                }
-                wait = false;
-            }
-
-            @Override
-            public void onError(VKError error) {
-                super.onError(error);
-                wait = false;
-            }
-        };
-    }
-
-    private class ThreadRemove implements Runnable {
-
-        private int[] ids;
-        private boolean wait = true;
-        private boolean error = false;
-
-        ThreadRemove(int[] ids) {
-            this.ids = ids;
-        }
-
-        @Override public void run() {
-            try {
-                for (int id : ids) {
-                    VKRequest vkRequest = new VKRequest("photos.delete", VKParameters.from(VKApiConst.OWNER_ID, userId, "photo_id", id));
-                    wait = true;
-                    vkRequest.executeWithListener(vkRequestListener);
-                    while (wait) {
-                        sleep(50);
-                        if (error)
-                            return;
-                    }
-                    sleep(300);
-                }
-            } catch (InterruptedException ex) {
-                //
-            }
-        }
-
-        private VKRequest.VKRequestListener vkRequestListener = new VKRequest.VKRequestListener() {
-            @Override
-            public void onComplete(VKResponse response) {
-                super.onComplete(response);
-                wait = false;
-            }
-
-            @Override
-            public void onError(VKError error) {
-                super.onError(error);
-                Log.e("mesUri", error.toString());
-                FragmentPhotoAlbum.ThreadRemove.this.error = true;
-                Toast.makeText(getContext(), "Не удалось удалить фото", Toast.LENGTH_SHORT).show();
-            }
-        };
-    }
-
-    private class ThreadLoadData implements Runnable {
-        private List<VKApiPhoto> vkApiPhotos;
-
-        ThreadLoadData(List<VKApiPhoto> vkApiPhotos) {
-            this.vkApiPhotos = vkApiPhotos;
+        DataLoader.getInstance().loadPhotoAlbums(albumId, vkApiPhotos -> {
             List<PhotoInfo> photoInfoList = new ArrayList<>();
             for (VKApiPhoto vkApiPhoto : vkApiPhotos)
-                photoInfoList.add(new PhotoInfo(vkApiPhoto.id));
-            handler.post(() -> recyclerAdapterPhotos.setList(photoInfoList));
-        }
-
-        @Override public void run() {
-            int pos = -1;
-            int rowNow = 0;
-            for (int i = 0; i < vkApiPhotos.size(); i++) {
-                VKApiPhoto vkApiPhoto = vkApiPhotos.get(i);
-
-                Bitmap bitmap = loadPhoto(vkApiPhoto);
-                pos++;
-
-                final int row = rowNow;
-                final int column = pos;
-
-                handler.post(() -> recyclerAdapterPhotos.setImageBitmap(row, column, bitmap));
-
-                if (pos == 2) {
-                    rowNow++;
-                    pos = -1;
-                }
-            }
-        }
+                photoInfoList.add(new PhotoInfo(vkApiPhoto.id, vkApiPhoto));
+            recyclerAdapterPhotos.setList(photoInfoList);
+        });
     }
 
     private class ThreadLoadPhoto implements Runnable {
@@ -334,7 +196,7 @@ public class FragmentPhotoAlbum extends Fragment {
 
         @Override public void run() {
             Bitmap bitmap = loadPhoto(vkApiPhoto);
-            PhotoInfo photoInfo = new PhotoInfo(vkApiPhoto.id);
+            PhotoInfo photoInfo = new PhotoInfo(vkApiPhoto.id, vkApiPhoto);
             photoInfo.setBitmap(bitmap);
             handler.post(() -> recyclerAdapterPhotos.addPhotoInfo(photoInfo));
         }

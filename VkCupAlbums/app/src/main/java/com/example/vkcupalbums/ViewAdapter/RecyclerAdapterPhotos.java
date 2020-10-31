@@ -2,9 +2,11 @@ package com.example.vkcupalbums.ViewAdapter;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,10 +17,16 @@ import android.widget.ImageView;
 
 import com.example.vkcupalbums.Objects.PhotoInfo;
 import com.example.vkcupalbums.R;
+import com.vk.sdk.api.model.VKApiPhoto;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
+
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class RecyclerAdapterPhotos extends RecyclerView.Adapter<RecyclerAdapterPhotos.ViewHolder> {
     private volatile List<PhotoInfo[]> list;
@@ -69,12 +77,7 @@ public class RecyclerAdapterPhotos extends RecyclerView.Adapter<RecyclerAdapterP
         this.onRecyclerListener = onRecyclerListener;
     }
 
-    public void setImageBitmap(int row, int column, Bitmap bitmap) {
-        list.get(row)[column].setBitmap(bitmap);
-        notifyItemChanged(row);
-    }
-
-    public void addPhotoInfo(PhotoInfo photoInfo) {
+    public synchronized void addPhotoInfo(PhotoInfo photoInfo) {
         if (!list.isEmpty()) {
             int pos = list.size() - 1;
             PhotoInfo[] photoInfos = list.get(pos);
@@ -91,7 +94,7 @@ public class RecyclerAdapterPhotos extends RecyclerView.Adapter<RecyclerAdapterP
         notifyDataSetChanged();
     }
 
-    public void addPhotoInfo(PhotoInfo[] albumInfos) {
+    public synchronized void addPhotoInfo(PhotoInfo[] albumInfos) {
         list.add(albumInfos);
         notifyItemInserted(list.size() - 1);
     }
@@ -102,7 +105,7 @@ public class RecyclerAdapterPhotos extends RecyclerView.Adapter<RecyclerAdapterP
         list = new ArrayList<>();
     }
 
-    public void setList(List<PhotoInfo> photoInfos) {
+    public synchronized void setList(List<PhotoInfo> photoInfos) {
         list = new ArrayList<>();
         for (int i = 0; i < photoInfos.size(); i += 3) {
             PhotoInfo[] groupInfosNew = new PhotoInfo[3];
@@ -110,9 +113,51 @@ public class RecyclerAdapterPhotos extends RecyclerView.Adapter<RecyclerAdapterP
                 groupInfosNew[j] = photoInfos.get(j + i);
             list.add(groupInfosNew);
         }
-        notifyDataSetChanged();
+        loadPhoto();
     }
 
+
+    private void loadPhoto() {
+        Observable<Integer> observable = Observable.create((emitter) -> {
+            Bitmap bitmap;
+            int count = 0;
+            for (PhotoInfo[] photoInfos : list) {
+                for (PhotoInfo photoInfo : photoInfos) {
+                    if (photoInfo != null && photoInfo.getBitmap() == null) {
+                        bitmap = loadPhoto(photoInfo.getVkApiPhoto());
+                        photoInfo.setBitmap(bitmap);
+                    }
+                }
+                emitter.onNext(count);
+                count++;
+            }
+            emitter.onNext(count);
+            emitter.onComplete();
+        });
+        observable = observable.observeOn(AndroidSchedulers.mainThread()).subscribeOn(Schedulers.newThread());
+        observable.subscribe(count -> notifyItemChanged(count), throwable -> throwable.printStackTrace());
+    }
+
+    private Bitmap loadPhoto(VKApiPhoto vkApiPhoto) {
+        String[] photos = new String[]{vkApiPhoto.photo_2560, vkApiPhoto.photo_1280,
+                vkApiPhoto.photo_807, vkApiPhoto.photo_604,
+                vkApiPhoto.photo_130, vkApiPhoto.photo_75};
+        String http = photos[0];
+        for (String photoHttp : photos)
+            if (!photoHttp.isEmpty()) {
+                http = photoHttp;
+                break;
+            }
+
+        Bitmap mIcon11 = null;
+        try {
+            InputStream in = new java.net.URL(http).openStream();
+            mIcon11 = BitmapFactory.decodeStream(in);
+        } catch (Exception e) {
+            Log.e("mesUri", "error to load image : " + e.getMessage());
+        }
+        return mIcon11;
+    }
 
     /*GroupInfo[] getItemText(int id) {
         return list.get(id);

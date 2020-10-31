@@ -24,16 +24,16 @@ import android.os.Handler;
 
 import static java.lang.Thread.sleep;
 
-public class ThreadPhotoLoader extends ThreadRunners {
+public class ThreadAlbumLoader extends ThreadRunners {
     private int offset = 0;
     private int count = 50;
     private boolean wait = true;
-    private OnPhotoLoad onPhotoLoad;
+    private OnAlbumsLoad onAlbumsLoad;
     private List<AlbumInfo> albumInfoList = new ArrayList<>();
 
-    ThreadPhotoLoader(OnPhotoLoad onPhotoLoad, Handler handler, OnOverLoad onOverLoad) {
+    ThreadAlbumLoader(OnAlbumsLoad onAlbumsLoad, Handler handler, OnOverLoad onOverLoad) {
         super(onOverLoad, handler);
-        this.onPhotoLoad = onPhotoLoad;
+        this.onAlbumsLoad = onAlbumsLoad;
     }
 
     @Override public void run() {
@@ -64,7 +64,7 @@ public class ThreadPhotoLoader extends ThreadRunners {
             albumInfoList.get(i).setBitmapMain(mIcon11);
         }
 
-        handler.post(() -> onPhotoLoad.onLoad(albumInfoList));
+        handler.post(() -> onAlbumsLoad.onLoad(albumInfoList));
         onOverLoad.onOverLoad();
     }
 
@@ -100,7 +100,7 @@ public class ThreadPhotoLoader extends ThreadRunners {
         }
     };
 
-    public interface OnPhotoLoad {
+    public interface OnAlbumsLoad {
         void onLoad(List<AlbumInfo> albumInfoList);
     }
 }

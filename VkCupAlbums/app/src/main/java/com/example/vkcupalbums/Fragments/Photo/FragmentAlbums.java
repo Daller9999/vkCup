@@ -7,14 +7,12 @@ import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.vkcupalbums.DataLoader.DataLoader;
 import com.example.vkcupalbums.Objects.AlbumInfo;
@@ -23,15 +21,6 @@ import com.example.vkcupalbums.R;
 import com.example.vkcupalbums.ViewAdapter.OnRecyclerListener;
 import com.example.vkcupalbums.ViewAdapter.RecyclerAdapter;
 import com.vk.sdk.VKAccessToken;
-import com.vk.sdk.api.VKApiConst;
-import com.vk.sdk.api.VKError;
-import com.vk.sdk.api.VKParameters;
-import com.vk.sdk.api.VKRequest;
-import com.vk.sdk.api.VKResponse;
-import com.vk.sdk.api.model.VKApiPhotoAlbum;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,8 +29,6 @@ import java.util.Vector;
 import static java.lang.Thread.sleep;
 
 public class FragmentAlbums extends Fragment {
-
-    private int userId;
 
     private RecyclerView recyclerView;
     private RecyclerAdapter recyclerAdapter;
@@ -56,8 +43,6 @@ public class FragmentAlbums extends Fragment {
 
     private List<AlbumInfo> albumInfoList = new ArrayList<>();
 
-    private final Handler handler = new Handler();
-
     @Override public View onCreateView(@NonNull LayoutInflater inflater, final ViewGroup container, Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         View view = inflater.inflate(R.layout.fragment_albums, container, false);
@@ -66,8 +51,6 @@ public class FragmentAlbums extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerAdapter = new RecyclerAdapter(getContext());
         recyclerView.setAdapter(recyclerAdapter);
-
-        userId = Integer.valueOf(VKAccessToken.currentToken().userId);
 
         if (albumInfoList.isEmpty())
             loadUserAlbums();
@@ -153,7 +136,7 @@ public class FragmentAlbums extends Fragment {
     }
 
     private void loadUserAlbums() {
-        DataLoader.getInstance().loadPhotoData(albumInfoList -> {
+        DataLoader.getInstance().loadAlbums(albumInfoList -> {
             this.albumInfoList = albumInfoList;
             recyclerAdapter.setList(albumInfoList);
         });
