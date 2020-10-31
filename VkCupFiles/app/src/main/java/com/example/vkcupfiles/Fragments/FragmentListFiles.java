@@ -106,7 +106,6 @@ public class FragmentListFiles extends Fragment {
                         try {
                             if (type == VkDocsData.IMAGE || type == VkDocsData.GIF)
                                 https = jsonObject1.getString("photo_100");
-                            int u = 4;
                         } catch (JSONException ex) {
                             //
                         }

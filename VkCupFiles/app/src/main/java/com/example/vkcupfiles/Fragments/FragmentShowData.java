@@ -2,7 +2,9 @@ package com.example.vkcupfiles.Fragments;
 
 import android.app.Application;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -10,6 +12,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.NavUtils;
 import android.support.v4.content.FileProvider;
@@ -21,12 +24,17 @@ import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.MediaController;
+import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.example.vkcupfiles.MainActivity;
 import com.example.vkcupfiles.R;
 import com.example.vkcupfiles.VkDocsData;
@@ -56,6 +64,7 @@ public class FragmentShowData extends Fragment {
     private ImageView imageView;
     private TextView textView;
     private VideoView videoView;
+    private ProgressBar progressBar;
 
     private MediaController mediaController;
 
@@ -63,7 +72,11 @@ public class FragmentShowData extends Fragment {
     private Button buttonStart;
     private boolean play = true;
 
-    private ProgressDialog pDialog;
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+
+    }
 
     @Override public View onCreateView(@NonNull LayoutInflater inflater, final ViewGroup container, Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,6 +86,8 @@ public class FragmentShowData extends Fragment {
         videoView = view.findViewById(R.id.videoView);
         seekBar = view.findViewById(R.id.seekBar);
         buttonStart = view.findViewById(R.id.buttonPlay);
+        progressBar = view.findViewById(R.id.progressBar);
+
 
         mediaController = view.findViewById(R.id.mediaController);
 
@@ -87,7 +102,19 @@ public class FragmentShowData extends Fragment {
 
         if (vkDocsData.getType() == VkDocsData.GIF || vkDocsData.getType() == VkDocsData.IMAGE) {
             imageView.setVisibility(View.VISIBLE);
-            Glide.with(getContext()).load(vkDocsData.getUrl()).into(imageView);
+            Glide.with(getContext()).load(vkDocsData.getUrl()).listener(new RequestListener<Drawable>() {
+                @Override
+                public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                    progressBar.setVisibility(View.GONE);
+                    return false;
+                }
+
+                @Override
+                public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                    progressBar.setVisibility(View.GONE);
+                    return false;
+                }
+            }).into(imageView);
         } else if (vkDocsData.getType() == VkDocsData.VIDEO || vkDocsData.getType() == VkDocsData.AUDIO) {
             if (vkDocsData.getType() == VkDocsData.VIDEO) {
                 videoView.setVisibility(View.VISIBLE);
@@ -106,6 +133,7 @@ public class FragmentShowData extends Fragment {
                     //
                 }
             }
+            progressBar.setVisibility(View.GONE);
         } else {
             new DownloadFileFromURL().execute(vkDocsData.getUrl());
         }
@@ -123,12 +151,6 @@ public class FragmentShowData extends Fragment {
 
         @Override protected void onPreExecute() {
             super.onPreExecute();
-            pDialog = new ProgressDialog(getContext());
-            pDialog.setMessage("Пожалуйста подождите закачку файлов");
-            pDialog.setIndeterminate(false);
-            pDialog.setMax(100);
-            pDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-            pDialog.show();
             File file = Environment.getExternalStorageDirectory();
             File files = new File(file.getPath() + "/" + "VkDownload");
             files.mkdir();
@@ -170,11 +192,9 @@ public class FragmentShowData extends Fragment {
 
 
         @Override protected void onProgressUpdate(String... progress) {
-            pDialog.setProgress(Integer.parseInt(progress[0]));
         }
 
         @Override protected void onPostExecute(String file_url) {
-            pDialog.dismiss();
             File file = new File(path + "/" + vkDocsData.getTitle());
             Intent sharingIntent = new Intent(Intent.ACTION_SEND);
             if (getActivity() != null && getContext() != null) {
@@ -184,6 +204,7 @@ public class FragmentShowData extends Fragment {
                 startActivity(Intent.createChooser(sharingIntent, "share file with"));
                 Toast.makeText(getContext(), "Файл закачан в основную директорию телефона в папку - VkDownload", Toast.LENGTH_SHORT).show();
             }
+            progressBar.setVisibility(View.GONE);
         }
 
     }

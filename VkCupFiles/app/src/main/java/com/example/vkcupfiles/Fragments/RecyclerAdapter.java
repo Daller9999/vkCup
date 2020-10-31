@@ -34,7 +34,13 @@ import org.json.JSONObject;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+
 import android.os.Handler;
+
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Scheduler;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 import static java.lang.Thread.sleep;
 
@@ -258,7 +264,29 @@ class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHolder> {
     }
 
     private void loadImages() {
-        new Thread(() -> {
+        Observable<DataLoad> observable = Observable.create((emitter) -> {
+            int count = 0;
+            for (int i = 0; i < httpsPhotos.size() && isLoadRun; i++) {
+                VkDocsData vkDocsData = list.get(i);
+                if (needLoad.get(i) && (vkDocsData.getType() == VkDocsData.IMAGE || vkDocsData.getType() == VkDocsData.GIF)) {
+                    String http = httpsPhotos.get(i);
+                    try {
+                        Bitmap bitmap = loadPhoto(http);
+                        while (list.size() < count + 1)
+                            sleep(50);
+                        emitter.onNext(new DataLoad(bitmap, count));
+                    } catch (InterruptedException ex) {
+                        //
+                    }
+                }
+                count++;
+            }
+            emitter.onComplete();
+        });
+        observable = observable.observeOn(AndroidSchedulers.mainThread()).subscribeOn(Schedulers.newThread());
+        observable.subscribe(dataLoad -> updateImage(dataLoad.bitmap, dataLoad.pos),
+                             throwable -> throwable.printStackTrace());
+        /*new Thread(() -> {
             int count = 0;
             for (int i = 0; i < httpsPhotos.size() && isLoadRun; i++) {
                 VkDocsData vkDocsData = list.get(i);
@@ -276,7 +304,17 @@ class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHolder> {
                 }
                 count++;
             }
-        }).start();
+        }).start();*/
+    }
+
+    private class DataLoad {
+        private Bitmap bitmap;
+        private int pos;
+
+        DataLoad(Bitmap bitmap, int pos) {
+            this.bitmap = bitmap;
+            this.pos = pos;
+        }
     }
 
     private Bitmap loadPhoto(String http) {
