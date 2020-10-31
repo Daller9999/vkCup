@@ -1,4 +1,4 @@
-package com.example.vkcupalbums.Fragments;
+package com.example.vkcupalbums.Fragments.Photo;
 
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -10,7 +10,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 
 import com.example.vkcupalbums.MainActivity;
-import com.example.vkcupalbums.PhotoInfo;
+import com.example.vkcupalbums.Objects.PhotoInfo;
 import com.example.vkcupalbums.R;
 
 public class FragmentPhoto extends Fragment {
@@ -25,8 +25,7 @@ public class FragmentPhoto extends Fragment {
 
         Button buttonBack = view.findViewById(R.id.buttonBack);
         buttonBack.setOnClickListener((v) -> {
-            if (getActivity() != null)
-                ((MainActivity) getActivity()).popBackStack();
+            getFragmentManager().popBackStack();
         });
         return view;
     }

@@ -14,7 +14,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.example.vkcupalbums.AlbumInfo;
+import com.example.vkcupalbums.Objects.AlbumInfo;
 import com.example.vkcupalbums.R;
 
 import java.util.ArrayList;

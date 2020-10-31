@@ -1,4 +1,4 @@
-package com.example.vkcupalbums.Fragments;
+package com.example.vkcupalbums.Fragments.Photo;
 
 import android.content.Intent;
 import android.database.Cursor;
@@ -23,7 +23,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.vkcupalbums.MainActivity;
-import com.example.vkcupalbums.PhotoInfo;
+import com.example.vkcupalbums.Objects.PhotoInfo;
 import com.example.vkcupalbums.R;
 import com.example.vkcupalbums.ViewAdapter.OnRecyclerListener;
 import com.example.vkcupalbums.ViewAdapter.RecyclerAdapterPhotos;
@@ -48,10 +48,10 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-// https://stackoverflow.com/questions/2017414/post-multipart-request-with-android-sdk
-
 import static android.app.Activity.RESULT_OK;
 import static java.lang.Thread.sleep;
+
+// https://stackoverflow.com/questions/2017414/post-multipart-request-with-android-sdk
 
 public class FragmentPhotoAlbum extends Fragment {
 
@@ -86,8 +86,9 @@ public class FragmentPhotoAlbum extends Fragment {
 
             @Override public void onPhotoClick(PhotoInfo photoInfo) {
                 photoInfos = recyclerAdapterPhotos.getList();
-                if (getActivity() != null)
-                    ((MainActivity) getActivity()).loadFragmentPhoto(photoInfo);
+                FragmentPhoto fragmentPhoto = new FragmentPhoto();
+                fragmentPhoto.setPhoto(photoInfo);
+                getFragmentManager().beginTransaction().replace(R.id.container_photo, fragmentPhoto).addToBackStack(FragmentPhoto.class.getName()).commit();
             }
 
             @Override public void onRemove(int[] ids) {
@@ -284,7 +285,8 @@ public class FragmentPhotoAlbum extends Fragment {
             @Override
             public void onError(VKError error) {
                 super.onError(error);
-                ThreadRemove.this.error = true;
+                Log.e("mesUri", error.toString());
+                FragmentPhotoAlbum.ThreadRemove.this.error = true;
                 Toast.makeText(getContext(), "Не удалось удалить фото", Toast.LENGTH_SHORT).show();
             }
         };

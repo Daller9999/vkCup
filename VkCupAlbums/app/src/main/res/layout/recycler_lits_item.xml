@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/containerItem"
+    android:layout_width="match_parent"
+    android:layout_height="84dp">
+
+    <android.support.v7.widget.CardView
+        android:id="@+id/imageCardView"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="12dp"
+
+        app:cardCornerRadius="5dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent" >
+        <ImageView
+            android:id="@+id/imageSrc"
+            android:scaleType="centerCrop"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+    </android.support.v7.widget.CardView>
+
+    <TextView
+        android:id="@+id/textViewFileName"
+        android:layout_width="0dp"
+        android:layout_height="20dp"
+
+        android:layout_marginEnd="18dp"
+        android:textColor="@color/vk_black"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_marginStart="12dp"
+        app:layout_constraintLeft_toRightOf="@id/imageCardView"
+        app:layout_constraintRight_toLeftOf="@id/buttonMore"
+        app:layout_constraintTop_toTopOf="@id/imageCardView" />
+
+    <TextView
+        android:id="@+id/textViewDataSize"
+        android:layout_width="0dp"
+        android:layout_height="18dp"
+
+        android:layout_marginEnd="18dp"
+        android:textSize="13sp"
+        app:layout_constraintLeft_toLeftOf="@id/textViewFileName"
+        app:layout_constraintRight_toLeftOf="@id/buttonMore"
+        app:layout_constraintTop_toBottomOf="@id/textViewFileName" />
+
+    <TextView
+        android:id="@+id/textViewDataAny"
+        android:layout_width="0dp"
+        android:layout_height="18dp"
+
+        android:textSize="13sp"
+        app:layout_constraintLeft_toLeftOf="@id/textViewFileName"
+        app:layout_constraintRight_toLeftOf="@id/buttonMore"
+        app:layout_constraintTop_toBottomOf="@id/textViewDataSize" />
+
+    <Button
+        android:id="@+id/buttonMore"
+        android:layout_width="36dp"
+        android:layout_height="48dp"
+
+        android:elevation="2dp"
+        android:background="@color/vk_clear"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+    <View
+        app:layout_constraintBottom_toBottomOf="@id/buttonMore"
+        app:layout_constraintLeft_toLeftOf="@id/buttonMore"
+        app:layout_constraintRight_toRightOf="@id/buttonMore"
+        app:layout_constraintTop_toTopOf="@id/buttonMore"
+
+        android:background="@mipmap/ic_more_vertical_16"
+        android:layout_width="8dp"
+        android:layout_height="16dp"/>
+
+</android.support.constraint.ConstraintLayout>

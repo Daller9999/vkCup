@@ -4,4 +4,9 @@
 
     <string name="text_documents">Документы</string>
     <string name="text_edit">Редактирование</string>
+
+    <string name="text_rename">Переименовать</string>
+    <string name="text_delte">Удалить документ</string>
+
+    <string name="text_docs">Документы</string>
 </resources>

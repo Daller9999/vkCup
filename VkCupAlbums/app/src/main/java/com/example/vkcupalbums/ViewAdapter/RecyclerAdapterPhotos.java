@@ -13,7 +13,7 @@ import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.ImageView;
 
-import com.example.vkcupalbums.PhotoInfo;
+import com.example.vkcupalbums.Objects.PhotoInfo;
 import com.example.vkcupalbums.R;
 
 import java.util.ArrayList;

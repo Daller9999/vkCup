@@ -1,4 +1,4 @@
-package com.example.vkcupalbums.Fragments;
+package com.example.vkcupalbums.Fragments.Photo;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -18,9 +18,9 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.vkcupalbums.AlbumInfo;
 import com.example.vkcupalbums.MainActivity;
-import com.example.vkcupalbums.PhotoInfo;
+import com.example.vkcupalbums.Objects.AlbumInfo;
+import com.example.vkcupalbums.Objects.PhotoInfo;
 import com.example.vkcupalbums.R;
 import com.example.vkcupalbums.ViewAdapter.OnRecyclerListener;
 import com.example.vkcupalbums.ViewAdapter.RecyclerAdapter;
@@ -30,7 +30,6 @@ import com.vk.sdk.api.VKError;
 import com.vk.sdk.api.VKParameters;
 import com.vk.sdk.api.VKRequest;
 import com.vk.sdk.api.VKResponse;
-import com.vk.sdk.api.model.VKApiPhoto;
 import com.vk.sdk.api.model.VKApiPhotoAlbum;
 
 import org.json.JSONArray;
@@ -96,8 +95,9 @@ public class FragmentAlbums extends Fragment {
             }
 
             @Override public void onItemClick(int id) {
-                if (getActivity() != null)
-                    ((MainActivity) getActivity()).loadFragmentPhoto(id);
+                FragmentPhotoAlbum fragmentPhotoAlbum = new FragmentPhotoAlbum();
+                fragmentPhotoAlbum.setAlbumId(id);
+                getFragmentManager().beginTransaction().replace(R.id.container_photo, fragmentPhotoAlbum).addToBackStack(FragmentPhotoAlbum.class.getName()).commit();
             }
 
             @Override public void onPhotoClick(PhotoInfo photoInfo) { }
@@ -169,7 +169,7 @@ public class FragmentAlbums extends Fragment {
             @Override
             public void onError(VKError error) {
                 super.onError(error);
-                ThreadRemove.this.error = true;
+                FragmentAlbums.ThreadRemove.this.error = true;
                 Toast.makeText(getContext(), "Не удалось удалить сообщества", Toast.LENGTH_SHORT).show();
             }
         };

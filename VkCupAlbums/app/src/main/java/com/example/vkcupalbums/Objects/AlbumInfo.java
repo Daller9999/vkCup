@@ -1,4 +1,4 @@
-package com.example.vkcupalbums;
+package com.example.vkcupalbums.Objects;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;

@@ -2,46 +2,22 @@ package com.example.vkcupalbums;
 
 import android.Manifest;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.os.Build;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.example.vkcupalbums.Fragments.FragmentAlbums;
-import com.example.vkcupalbums.Fragments.FragmentPhoto;
-import com.example.vkcupalbums.Fragments.FragmentPhotoAlbum;
-import com.example.vkcupalbums.ViewAdapter.RecyclerAdapter;
+import com.example.vkcupalbums.Fragments.Photo.FragmentAlbums;
+import com.example.vkcupalbums.Fragments.Photo.FragmentPhoto;
+import com.example.vkcupalbums.Fragments.Photo.FragmentPhotoAlbum;
+import com.example.vkcupalbums.Objects.PhotoInfo;
 import com.vk.sdk.VKAccessToken;
 import com.vk.sdk.VKCallback;
 import com.vk.sdk.VKScope;
 import com.vk.sdk.VKSdk;
-import com.vk.sdk.api.VKApi;
-import com.vk.sdk.api.VKApiConst;
 import com.vk.sdk.api.VKError;
-import com.vk.sdk.api.VKParameters;
-import com.vk.sdk.api.VKRequest;
-import com.vk.sdk.api.VKResponse;
-import com.vk.sdk.api.methods.VKApiPhotos;
-import com.vk.sdk.api.model.VKApiPhoto;
-import com.vk.sdk.api.model.VKApiPhotoAlbum;
-import com.vk.sdk.api.model.VKApiUserFull;
-import com.vk.sdk.api.model.VKList;
-import com.vk.sdk.api.model.VkAudioArray;
-import com.vk.sdk.util.VKUtil;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -69,7 +45,10 @@ public class MainActivity extends AppCompatActivity {
         if (!VKSdk.isLoggedIn())
             VKSdk.login(this, otherPermissions);
         else {
-            loadFragmentAlbums();
+            ViewPager viewPager = findViewById(R.id.viewPager);
+            viewPager.setOffscreenPageLimit(2);
+            ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
+            viewPager.setAdapter(adapter);
         }
         Log.e("mesUri", "api is : " + VKSdk.getApiVersion());
     }
